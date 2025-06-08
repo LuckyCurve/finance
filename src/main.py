@@ -1,2 +1,6 @@
+from db import engine
+from db.common import Base
+
 if __name__ == "__main__":
-    print("hello")
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
