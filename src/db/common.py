@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import TEXT, TypeDecorator, func
+from sqlalchemy import TEXT, DateTime, TypeDecorator, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -28,8 +28,8 @@ class Base(DeclarativeBase):
         primary_key=True, nullable=False, autoincrement=True, comment="主键 id"
     )
     create_time: Mapped[datetime] = mapped_column(
-        server_default=func.now(), comment="创建时间，由数据库插入时间指定"
+        DateTime, server_default=func.now(), comment="创建时间，由数据库插入时间指定"
     )
     update_time: Mapped[datetime] = mapped_column(
-        default=datetime.now(), comment="更新时间，默认由程序生成"
+        DateTime, default=datetime.now(), comment="更新时间，默认由程序生成"
     )
