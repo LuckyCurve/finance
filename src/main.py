@@ -1,18 +1,8 @@
-from datetime import date
-from decimal import Decimal
-
-from sqlalchemy.orm import Session
-
-from db import engine
-from db.common import Base
-from db.entity import Account, CurrencyUnit
+import service
+import service.sync
 
 if __name__ == "__main__":
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-    with Session(engine) as session:
-        a = Account(
-            date=date.today(), currency=Decimal("10"), currency_unit=CurrencyUnit.CNY
-        )
-        session.add(a)
-        session.commit()
+    # Base.metadata.drop_all(db.engine)
+    # Base.metadata.create_all(db.engine)
+
+    service.sync.sync_exchange_rate()

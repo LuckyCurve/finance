@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from db.common import Base, DecimalAsString
 
 
-class CurrencyUnit(enum.Enum):
+class CurrencyType(enum.Enum):
     CNY = "CNY"
     USD = "USD"
     HKD = "HKD"
@@ -23,8 +23,8 @@ class Account(Base):
     currency: Mapped[Decimal] = mapped_column(
         DecimalAsString, nullable=False, comment="货币金额"
     )
-    currency_unit: Mapped[CurrencyUnit] = mapped_column(
-        Enum(CurrencyUnit), nullable=False, comment="货币单位"
+    currency_type: Mapped[CurrencyType] = mapped_column(
+        Enum(CurrencyType), nullable=False, comment="货币单位"
     )
 
 
@@ -71,8 +71,8 @@ class CurrencyAsset(Asset):
     currency: Mapped[Decimal] = mapped_column(
         DecimalAsString, nullable=False, comment="货币金额"
     )
-    currency_unit: Mapped[CurrencyUnit] = mapped_column(
-        Enum(CurrencyUnit), nullable=False, comment="货币单位"
+    currency_type: Mapped[CurrencyType] = mapped_column(
+        Enum(CurrencyType), nullable=False, comment="货币单位"
     )
 
 
@@ -115,6 +115,20 @@ class CurrencyTransaction(Transaction):
     currency: Mapped[Decimal] = mapped_column(
         DecimalAsString, nullable=False, comment="货币金额"
     )
-    currency_unit: Mapped[CurrencyUnit] = mapped_column(
-        Enum(CurrencyUnit), nullable=False, comment="货币单位"
+    currency_type: Mapped[CurrencyType] = mapped_column(
+        Enum(CurrencyType), nullable=False, comment="货币单位"
+    )
+
+
+class ExchangedRate(Base):
+    __tablename__ = "exchanged_rate"
+
+    currency_type: Mapped[CurrencyType] = mapped_column(
+        Enum(CurrencyType), nullable=False, comment="美元兑换的货币单位"
+    )
+    rate: Mapped[Decimal] = mapped_column(
+        DecimalAsString, nullable=False, comment="货币汇率"
+    )
+    date: Mapped[datetime.date] = mapped_column(
+        Date, nullable=False, comment="对应日期"
     )
