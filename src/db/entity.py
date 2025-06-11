@@ -57,9 +57,9 @@ class StockAsset(Asset):
         "polymorphic_identity": AssetType.TICKER,
     }
 
-    ticker: Mapped[str] = mapped_column(String(20), nullable=False, comment="股票代码")
+    ticker: Mapped[str] = mapped_column(String(20), nullable=True, comment="股票代码")
     shares: Mapped[Decimal] = mapped_column(
-        DecimalAsString, nullable=False, comment="股票份额"
+        DecimalAsString, nullable=True, comment="股票份额"
     )
 
 
@@ -69,10 +69,10 @@ class CurrencyAsset(Asset):
     }
 
     currency: Mapped[Decimal] = mapped_column(
-        DecimalAsString, nullable=False, comment="货币金额"
+        DecimalAsString, nullable=True, comment="货币金额"
     )
     currency_type: Mapped[CurrencyType] = mapped_column(
-        Enum(CurrencyType), nullable=False, comment="货币单位"
+        Enum(CurrencyType), nullable=True, comment="货币单位"
     )
 
 
@@ -89,7 +89,7 @@ class Transaction(Base):
     )
     type: Mapped[TransactionType] = mapped_column(Enum(TransactionType), nullable=False)
     trade_type: Mapped[AssetType] = mapped_column(Enum(AssetType), nullable=False)
-    comment: Mapped[str] = mapped_column(String, comment="购买备注")
+    comment: Mapped[str] = mapped_column(String, nullable=True, comment="购买备注")
 
     __mapper_args__ = {
         "polymorphic_on": trade_type,
@@ -101,9 +101,12 @@ class StockTransaction(Transaction):
         "polymorphic_identity": AssetType.TICKER,
     }
 
-    ticker: Mapped[str] = mapped_column(String(20), nullable=False, comment="股票代码")
+    ticker: Mapped[str] = mapped_column(String(20), nullable=True, comment="股票代码")
     shares: Mapped[Decimal] = mapped_column(
-        DecimalAsString, nullable=False, comment="股票份额"
+        DecimalAsString, nullable=True, comment="股票份额"
+    )
+    price: Mapped[Decimal] = mapped_column(
+        DecimalAsString, nullable=True, comment="交易价格"
     )
 
 
@@ -113,10 +116,10 @@ class CurrencyTransaction(Transaction):
     }
 
     currency: Mapped[Decimal] = mapped_column(
-        DecimalAsString, nullable=False, comment="货币金额"
+        DecimalAsString, nullable=True, comment="货币金额"
     )
     currency_type: Mapped[CurrencyType] = mapped_column(
-        Enum(CurrencyType), nullable=False, comment="货币单位"
+        Enum(CurrencyType), nullable=True, comment="货币单位"
     )
 
 
