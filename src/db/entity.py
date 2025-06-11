@@ -2,7 +2,7 @@ import datetime
 import enum
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, Enum, String
+from sqlalchemy import Date, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.common import Base, DecimalAsString
@@ -39,13 +39,8 @@ class Asset(Base):
     date: Mapped[datetime.date] = mapped_column(
         Date, nullable=False, comment="资产记录时间"
     )
-    is_current: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        comment="是否为最新资产数据，如果没有发生交易，则始终为最新的资产数据",
-    )
     type: Mapped[AssetType] = mapped_column(Enum(AssetType), nullable=False)
-    comment: Mapped[str] = mapped_column(String, comment="持有资产评论")
+    comment: Mapped[str] = mapped_column(String, nullable=True, comment="持有资产评论")
 
     __mapper_args__ = {
         "polymorphic_on": type,
