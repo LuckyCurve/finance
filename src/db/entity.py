@@ -130,3 +130,17 @@ class ExchangedRate(Base):
     date: Mapped[datetime.date] = mapped_column(
         Date, nullable=False, comment="对应日期"
     )
+
+
+class TickerInfo(Base):
+    __tablename__ = "ticker_info"
+
+    date: Mapped[datetime.date] = mapped_column(
+        Date, nullable=False, comment="对应日期"
+    )
+    currency: Mapped[Decimal] = mapped_column(
+        DecimalAsString, nullable=True, comment="货币金额"
+    )
+    currency_type: Mapped[CurrencyType] = mapped_column(
+        Enum(CurrencyType), nullable=False, comment="美元兑换的货币单位"
+    )

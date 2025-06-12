@@ -3,18 +3,21 @@
 
 from datetime import date, timedelta
 from decimal import Decimal
-from turtle import pd
 
 import pandas as pd
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, func, select
 from sqlalchemy.orm import Session
+from yfinance import Ticker
 
+import db
 from db import engine
 from db.entity import (
     Asset,
+    CurrencyType,
     ExchangedRate,
     StockAsset,
     StockTransaction,
+    TickerInfo,
     Transaction,
     TransactionType,
 )
@@ -102,3 +105,28 @@ def sync_exchange_rate() -> None:
             session.add_all(res)
 
         session.commit()
+
+
+def sync_ticker_info():
+    with Session(db.engine) as session:
+        sql = select(StockTransaction.ticker, func.min(StockTransaction.date)).group_by(
+            StockTransaction.ticker
+        )
+
+        session.query(TickerInfo).delete()
+
+        for ticker_name, buy_date in session.execute(sql).all():
+            ticker = Ticker(ticker_name)
+
+            ticker_infos = []
+            currency_type = CurrencyType(ticker.fast_info["currency"])
+            for i, row in ticker.history(start=buy_date, end=date.today()).iterrows():
+                ticker_infos.append(
+                    TickerInfo(
+                        date=i.date(),
+                        currency=Decimal(row["Close"]),
+                        currency_type=currency_type,
+                    )
+                )
+            session.add_all(ticker_infos)
+            session.commit()
