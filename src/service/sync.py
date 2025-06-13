@@ -1,6 +1,7 @@
 # 执行对应的同步任务，将数据从外部数据源同步到数据库当中来
 
 
+import datetime
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import Dict, List
@@ -14,6 +15,7 @@ import db
 from db import engine
 from db.entity import (
     Asset,
+    Config,
     CurrencyType,
     ExchangedRate,
     StockAsset,
@@ -23,6 +25,33 @@ from db.entity import (
     TransactionType,
 )
 from outbound import currency
+
+LAST_SYNC_DATE = "last_sync_date"
+
+DATE_FORMAT = "%Y-%m-%d"
+
+
+def sync():
+    with Session(db.engine) as session:
+        sync_config = session.query(Config).filter(Config.key == LAST_SYNC_DATE).first()
+        if sync_config is not None:
+            sync_date = datetime.datetime.strptime(
+                sync_config.value, DATE_FORMAT
+            ).date()
+            if sync_date >= date.today():
+                print("检测到已经同步，跳过同步信息")
+                return
+        else:
+            sync_config = Config(key=LAST_SYNC_DATE)
+
+        sync_exchange_rate()
+        sync_asset()
+        sync_ticker_info()
+
+        sync_config.value = date.today().strftime(DATE_FORMAT)
+        if sync_config.id is None:
+            session.add(sync_config)
+        session.commit()
 
 
 def sync_asset():

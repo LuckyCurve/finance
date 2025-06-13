@@ -1,14 +1,17 @@
+import db
+from db.common import Base
 from service.calculate import calculate_daily_change
+from service.sync import sync
 
 if __name__ == "__main__":
-    # Base.metadata.create_all(db.engine)
-    # sync_exchange_rate()
-    # sync_asset()
-    # sync_ticker_info()
+    Base.metadata.create_all(db.engine)
+
+    sync()
+
     calculate_daily_change()
 
 
-def sync():
+def date():
     pass
     # buy_stock("0700.HK", date(2025, 6, 11), 165, 303.03)
     # buy_stock("0700.HK", date(2025, 6, 11), 166, 343.8)

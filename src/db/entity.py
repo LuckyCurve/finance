@@ -8,6 +8,13 @@ from sqlalchemy.orm import Mapped, mapped_column
 from db.common import Base, DecimalAsString
 
 
+class Config(Base):
+    __tablename__ = "config"
+
+    key: Mapped[str] = mapped_column(String, nullable=True)
+    value: Mapped[str] = mapped_column(String, nullable=True)
+
+
 class CurrencyType(enum.Enum):
     CNY = "CNY"
     USD = "USD"
