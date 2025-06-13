@@ -149,6 +149,7 @@ def sync_ticker_info():
                 ticker_infos.append(
                     TickerInfo(
                         date=i.date(),
+                        ticker=ticker_name,
                         currency=Decimal(row["Close"]),
                         currency_type=currency_type,
                     )

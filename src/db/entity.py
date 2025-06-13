@@ -141,6 +141,7 @@ class TickerInfo(Base):
     date: Mapped[datetime.date] = mapped_column(
         Date, nullable=False, comment="对应日期"
     )
+    ticker: Mapped[str] = mapped_column(String(20), nullable=True, comment="股票代码")
     currency: Mapped[Decimal] = mapped_column(
         DecimalAsString, nullable=True, comment="货币金额"
     )

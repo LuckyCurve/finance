@@ -10,7 +10,7 @@ from db.entity import AssetType, StockTransaction, TransactionType
 
 def buy_stock(symbol: str, date: date, number: str | float, price: str | float) -> None:
     if not stock_exists(symbol):
-        print(f"{symbol} 不存在，请重新输入")
+        raise Exception(f"{symbol} 不存在，请重新输入")
     t = StockTransaction(
         date=date,
         type=TransactionType.BUY,
