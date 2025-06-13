@@ -3,6 +3,7 @@
 
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import Dict, List
 
 import pandas as pd
 from sqlalchemy import asc, desc, func, select
@@ -40,25 +41,49 @@ def sync_asset():
 
         assets = []
 
-        current_assets = {}
+        current_assets: Dict[str, List[Decimal, Decimal]] = {}
 
         for d in pd.date_range(start=transactions[0].date, end=date.today()):
             d = d.date()
             if d in transactions_dict:
                 for transaction in transactions_dict[d]:
                     transaction: StockTransaction
-                    number = Decimal(0)
+
                     if transaction.ticker in current_assets:
-                        number = current_assets[transaction.ticker]
-                    if transaction.type == TransactionType.BUY:
-                        number += transaction.shares
+                        history_shares, history_price = current_assets[
+                            transaction.ticker
+                        ]
+                        if transaction.type == TransactionType.BUY:
+                            history_price = (
+                                history_shares * history_price
+                                + transaction.price * transaction.shares
+                            ) / (history_shares + transaction.shares)
+                            history_shares = history_shares + transaction.shares
+                        else:
+                            history_price = (
+                                history_shares * history_price
+                                - transaction.price * transaction.shares
+                            ) / (history_shares - transaction.shares)
+                            history_shares = history_shares + transaction.shares
+                        current_assets[transaction.ticker] = (
+                            history_shares,
+                            history_price,
+                        )
+
+                    elif transaction.type == TransactionType.BUY:
+                        current_assets[transaction.ticker] = (
+                            transaction.shares,
+                            transaction.price,
+                        )
+                        pass
                     else:
-                        number -= transaction.shares
-                    current_assets[transaction.ticker] = number
+                        raise Exception(
+                            f"transaction 数据出现异常，当前持有资产为0依然进行出售操作，id: {transaction.id}"
+                        )
 
             assets += [
-                StockAsset(ticker=ticker, shares=shares, date=d)
-                for ticker, shares in current_assets.items()
+                StockAsset(ticker=ticker, shares=shares, date=d, price=price)
+                for ticker, (shares, price) in current_assets.items()
             ]
 
         session.add_all(assets)

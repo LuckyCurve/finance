@@ -56,6 +56,9 @@ class StockAsset(Asset):
     shares: Mapped[Decimal] = mapped_column(
         DecimalAsString, nullable=True, comment="股票份额"
     )
+    price: Mapped[Decimal] = mapped_column(
+        DecimalAsString, nullable=True, comment="平均价格"
+    )
 
 
 class CurrencyAsset(Asset):
