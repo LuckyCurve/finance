@@ -28,6 +28,7 @@ from db.entity import (
     TransactionType,
 )
 from outbound import currency
+from service.ticker import get_ticker_close_price
 
 LAST_SYNC_DATE = "last_sync_date"
 
@@ -102,12 +103,7 @@ def _calculate_stock_each_daily_account(each_date: date, session: Session):
     res = Decimal(0)
 
     for stock in stock_assets:
-        current_date = (
-            session.query(TickerInfo)
-            .filter(TickerInfo.ticker == stock.ticker)
-            .filter(TickerInfo.date == each_date)
-            .first()
-        )
+        current_date = get_ticker_close_price(each_date, stock.ticker)
 
         exchange_rate = Decimal(1)
         if current_date.currency_type != CurrencyType.USD:
@@ -247,7 +243,7 @@ def sync_exchange_rate() -> None:
             )
             days = [
                 cloest_date + timedelta(days=x)
-                for x in range(0, (date.today() - cloest_date).days + 1)
+                for x in range(0, (date.today() - cloest_date).days)
             ]
 
             res = []

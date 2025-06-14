@@ -6,7 +6,8 @@ from sqlalchemy import asc
 from sqlalchemy.orm import Session
 
 import db
-from db.entity import CurrencyType, ExchangedRate, StockAsset, TickerInfo
+from db.entity import CurrencyType, ExchangedRate, StockAsset
+from service.ticker import get_ticker_close_price
 
 
 def calculate_daily_change():
@@ -25,18 +26,8 @@ def calculate_each_daily_change(each_date: date, session: Session):
     res = Decimal(0)
 
     for stock in stock_assets:
-        yesterday = (
-            session.query(TickerInfo)
-            .filter(TickerInfo.ticker == stock.ticker)
-            .filter(TickerInfo.date == each_date - timedelta(1))
-            .first()
-        )
-        current_date = (
-            session.query(TickerInfo)
-            .filter(TickerInfo.ticker == stock.ticker)
-            .filter(TickerInfo.date == each_date)
-            .first()
-        )
+        yesterday = get_ticker_close_price(each_date - timedelta(1), stock.ticker)
+        current_date = get_ticker_close_price(each_date, stock.ticker)
 
         exchange_rate = Decimal(1)
         if yesterday.currency_type != CurrencyType.USD:
