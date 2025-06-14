@@ -5,6 +5,9 @@ from service.sync import sync
 
 if __name__ == "__main__":
     Base.metadata.create_all(db.engine)
+    # buy_currency(645576.25, CurrencyType.CNY, comment="微众银行")
+    # buy_currency(51714.94, CurrencyType.CNY, comment="招商银行")
+    # buy_currency(129715.35, CurrencyType.HKD, comment="汇丰香港")
 
     sync()
 
@@ -23,3 +26,6 @@ def date():
     # buy_stock("QQQM", date(2025, 6, 11), 4.6773, 213.87)
     # buy_stock("SGOV", date(2025, 6, 11), 222.4285, 100.49)
     # buy_stock("PDD", date(2025, 6, 11), 0.8267, 121.38)
+    # buy_currency(645576.25, CurrencyType.CNY, comment="微众银行")
+    # buy_currency(51714.94, CurrencyType.CNY, comment="招商银行")
+    # buy_currency(129715.35, CurrencyType.HKD, comment="汇丰香港")

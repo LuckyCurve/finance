@@ -5,7 +5,28 @@ from sqlalchemy.orm import Session
 from yfinance import Ticker
 
 import db
-from db.entity import AssetType, StockTransaction, TransactionType
+from db.entity import (
+    AssetType,
+    CurrencyTransaction,
+    CurrencyType,
+    StockTransaction,
+    TransactionType,
+)
+
+
+def buy_currency(
+    currency: float | str, currency_type: CurrencyType, comment: str
+) -> None:
+    t = CurrencyTransaction(
+        date=date.today(),
+        type=TransactionType.BUY,
+        currency=Decimal(currency),
+        currency_type=currency_type,
+        comment=comment,
+    )
+    with Session(db.engine) as session:
+        session.add(t)
+        session.commit()
 
 
 def buy_stock(symbol: str, date: date, number: str | float, price: str | float) -> None:

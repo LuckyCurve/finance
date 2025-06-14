@@ -17,6 +17,8 @@ from db.entity import (
     Account,
     Asset,
     Config,
+    CurrencyAsset,
+    CurrencyTransaction,
     CurrencyType,
     ExchangedRate,
     StockAsset,
@@ -59,21 +61,43 @@ def sync():
 def sync_account():
     with Session(db.engine) as session:
         session.query(Account).delete()
-        stocck_asset = session.query(StockAsset).order_by(asc(StockAsset.date)).first()
+        assets = session.query(Asset).order_by(asc(Asset.date)).first()
         for each_date in pd.date_range(
-            start=stocck_asset.date, end=date.today() - timedelta(1)
+            start=assets.date, end=date.today() - timedelta(1)
         ):
             session.add(
                 Account(
                     date=each_date,
-                    currency=_calculate_each_daily_account(each_date, session),
+                    currency=_calculate_stock_each_daily_account(each_date, session)
+                    + _calculate_currency_each_daily_account(each_date, session),
                     currency_type=CurrencyType.USD,
                 )
             )
         session.commit()
 
 
-def _calculate_each_daily_account(each_date: date, session: Session):
+def _calculate_currency_each_daily_account(each_date: date, session: Session):
+    currency_assets = (
+        session.query(CurrencyAsset).filter(CurrencyAsset.date == each_date).all()
+    )
+    res = Decimal(0)
+
+    for currency_asset in currency_assets:
+        exchange_rate = Decimal(1)
+        if not currency_asset.currency_type == CurrencyType.USD:
+            exchange_rate = (
+                session.query(ExchangedRate)
+                .filter(ExchangedRate.date == each_date)
+                .filter(ExchangedRate.currency_type == currency_asset.currency_type)
+                .first()
+                .rate
+            )
+        res += currency_asset.currency / exchange_rate
+
+    return res
+
+
+def _calculate_stock_each_daily_account(each_date: date, session: Session):
     stock_assets = session.query(StockAsset).filter(StockAsset.date == each_date).all()
     res = Decimal(0)
 
@@ -102,66 +126,116 @@ def _calculate_each_daily_account(each_date: date, session: Session):
 def sync_asset():
     with Session(engine) as session:
         session.query(Asset).delete()
-        transactions = session.query(Transaction).order_by(asc(Transaction.date)).all()
-        if not transactions:
-            print("交易记录为空，无法生成资产数据")
-            return
-        transactions_dict = {}
-        for transaction in transactions:
-            if transaction.date in transactions_dict:
-                transactions_dict[transaction.date].append(transaction)
-            else:
-                transactions_dict[transaction.date] = [transaction]
 
-        assets = []
+        count = session.query(Transaction).count()
+        if count == 0:
+            raise Exception("交易记录为空，无法生成资产数据")
 
-        current_assets: Dict[str, List[Decimal, Decimal]] = {}
-
-        for d in pd.date_range(start=transactions[0].date, end=date.today()):
-            d = d.date()
-            if d in transactions_dict:
-                for transaction in transactions_dict[d]:
-                    transaction: StockTransaction
-
-                    if transaction.ticker in current_assets:
-                        history_shares, history_price = current_assets[
-                            transaction.ticker
-                        ]
-                        if transaction.type == TransactionType.BUY:
-                            history_price = (
-                                history_shares * history_price
-                                + transaction.price * transaction.shares
-                            ) / (history_shares + transaction.shares)
-                            history_shares = history_shares + transaction.shares
-                        else:
-                            history_price = (
-                                history_shares * history_price
-                                - transaction.price * transaction.shares
-                            ) / (history_shares - transaction.shares)
-                            history_shares = history_shares + transaction.shares
-                        current_assets[transaction.ticker] = (
-                            history_shares,
-                            history_price,
-                        )
-
-                    elif transaction.type == TransactionType.BUY:
-                        current_assets[transaction.ticker] = (
-                            transaction.shares,
-                            transaction.price,
-                        )
-                        pass
-                    else:
-                        raise Exception(
-                            f"transaction 数据出现异常，当前持有资产为0依然进行出售操作，id: {transaction.id}"
-                        )
-
-            assets += [
-                StockAsset(ticker=ticker, shares=shares, date=d, price=price)
-                for ticker, (shares, price) in current_assets.items()
-            ]
-
-        session.add_all(assets)
+        _sync_stock_asset(session)
+        _sync_currency_asset(session)
         session.commit()
+
+
+def _sync_currency_asset(session):
+    currency_transactions = (
+        session.query(CurrencyTransaction).order_by(asc(CurrencyTransaction.date)).all()
+    )
+    transactions_dict = {}
+    for transaction in currency_transactions:
+        if transaction.date in transactions_dict:
+            transactions_dict[transaction.date].append(transaction)
+        else:
+            transactions_dict[transaction.date] = [transaction]
+
+    assets = []
+
+    current_assets: Dict[CurrencyType, Decimal] = {}
+
+    for d in pd.date_range(start=currency_transactions[0].date, end=date.today()):
+        d = d.date()
+        if d in transactions_dict:
+            for transaction in transactions_dict[d]:
+                transaction: CurrencyTransaction
+
+                if transaction.currency_type in current_assets:
+                    history_currency = current_assets[transaction.currency_type]
+                    if transaction.type == TransactionType.BUY:
+                        history_currency += transaction.currency
+                    else:
+                        history_currency -= transaction.currency
+                    current_assets[transaction.currency_type] = history_currency
+
+                elif transaction.type == TransactionType.BUY:
+                    current_assets[transaction.currency_type] = transaction.currency
+                else:
+                    raise Exception(
+                        f"transaction 数据出现异常，当前持有资产为0依然进行出售操作，id: {transaction.id}"
+                    )
+
+        assets += [
+            CurrencyAsset(date=d, currency=currency, currency_type=currency_type)
+            for currency_type, currency in current_assets.items()
+        ]
+
+    session.add_all(assets)
+
+
+def _sync_stock_asset(session):
+    stock_transactions = (
+        session.query(StockTransaction).order_by(asc(StockTransaction.date)).all()
+    )
+    transactions_dict = {}
+    for transaction in stock_transactions:
+        if transaction.date in transactions_dict:
+            transactions_dict[transaction.date].append(transaction)
+        else:
+            transactions_dict[transaction.date] = [transaction]
+
+    assets = []
+
+    current_assets: Dict[str, List[Decimal, Decimal]] = {}
+
+    for d in pd.date_range(start=stock_transactions[0].date, end=date.today()):
+        d = d.date()
+        if d in transactions_dict:
+            for transaction in transactions_dict[d]:
+                transaction: StockTransaction
+
+                if transaction.ticker in current_assets:
+                    history_shares, history_price = current_assets[transaction.ticker]
+                    if transaction.type == TransactionType.BUY:
+                        history_price = (
+                            history_shares * history_price
+                            + transaction.price * transaction.shares
+                        ) / (history_shares + transaction.shares)
+                        history_shares = history_shares + transaction.shares
+                    else:
+                        history_price = (
+                            history_shares * history_price
+                            - transaction.price * transaction.shares
+                        ) / (history_shares - transaction.shares)
+                        history_shares = history_shares + transaction.shares
+                    current_assets[transaction.ticker] = (
+                        history_shares,
+                        history_price,
+                    )
+
+                elif transaction.type == TransactionType.BUY:
+                    current_assets[transaction.ticker] = (
+                        transaction.shares,
+                        transaction.price,
+                    )
+                else:
+                    raise Exception(
+                        f"transaction 数据出现异常，当前持有资产为0依然进行出售操作，id: {transaction.id}"
+                    )
+
+        assets += [
+            StockAsset(ticker=ticker, shares=shares, date=d, price=price)
+            for ticker, (shares, price) in current_assets.items()
+        ]
+
+    session.add_all(assets)
 
 
 def sync_exchange_rate() -> None:
