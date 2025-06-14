@@ -1,27 +1,50 @@
+from decimal import Decimal
+
 import pandas as pd
 import streamlit
+from numerize.numerize import numerize
+from sqlalchemy import desc
+from sqlalchemy.orm import Session
 
 import db
 from db.common import Base
+from db.entity import Account, CurrencyType
 from service.calculate import calculate_ticker_daily_change
 from service.sync import sync
 
 Base.metadata.create_all(db.engine)
 sync()
 
+
+def format_decimal(data):
+    return numerize(round(float(data), 2))
+
+
+def get_current_account() -> tuple[Decimal, Decimal, CurrencyType]:
+    with Session(db.engine) as session:
+        today, yesterday = session.query(Account).order_by(desc(Account.date)).limit(2)
+        return (today.currency, yesterday.currency, today.currency_type)
+
+
 if __name__ == "__main__":
     streamlit.set_page_config(page_title="我的财富看板", layout="wide")
     streamlit.title("我的财富看板")
 
+    today, yesterday, currency_type = get_current_account()
     col1, col2 = streamlit.columns(2)
-    col1.metric(label="我的财富总值", value="70 $", delta="-1.2")
-    col2.metric(label="股票部分变化", value="70 $", delta="1.2")
+    col1.metric(
+        label="我的财富总值",
+        value=f"{format_decimal(today)} {currency_type.value}",
+        delta=f"{format_decimal(today - yesterday)}",
+    )
+    col2.metric(label="待补充数据", value="70 $", delta="1.2")
 
     ticker_daily_change = calculate_ticker_daily_change()
-    df = pd.DataFrame(list(ticker_daily_change.items()), columns=["Date", "收益值"])
+    df = pd.DataFrame(ticker_daily_change, columns=["Date", "Earn"])
     df = df.sort_values("Date").set_index("Date")
     col1, col2 = streamlit.columns(2)
-    col1.line_chart(df, x_label="日期", y_label="收益值")
+    col1.line_chart(df, x_label="日期", y_label="涨跌幅")
+    col1.caption("每日股价涨跌图（含汇率波动）")
     col2.line_chart(df, x_label="日期", y_label="收益值")
 
 
