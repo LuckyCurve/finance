@@ -10,15 +10,16 @@ from db.entity import CurrencyType, ExchangedRate, StockAsset
 from service.ticker import get_ticker_close_price
 
 
-def calculate_daily_change():
+def calculate_ticker_daily_change():
     with Session(db.engine) as session:
+        res = {}
+
         stocck_asset = session.query(StockAsset).order_by(asc(StockAsset.date)).first()
         for each_date in pd.date_range(
             start=stocck_asset.date + timedelta(1), end=date.today() - timedelta(1)
         ):
-            print(
-                f"date: {each_date} - {calculate_each_daily_change(each_date, session)}"
-            )
+            res[each_date] = float(calculate_each_daily_change(each_date, session))
+        return res
 
 
 def calculate_each_daily_change(each_date: date, session: Session):

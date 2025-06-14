@@ -1,14 +1,28 @@
+import pandas as pd
+import streamlit
+
 import db
 from db.common import Base
-from service.calculate import calculate_daily_change
+from service.calculate import calculate_ticker_daily_change
 from service.sync import sync
 
+Base.metadata.create_all(db.engine)
+sync()
+
 if __name__ == "__main__":
-    Base.metadata.create_all(db.engine)
+    streamlit.set_page_config(page_title="我的财富看板", layout="wide")
+    streamlit.title("我的财富看板")
 
-    sync()
+    col1, col2 = streamlit.columns(2)
+    col1.metric(label="我的财富总值", value="70 $", delta="-1.2")
+    col2.metric(label="股票部分变化", value="70 $", delta="1.2")
 
-    calculate_daily_change()
+    ticker_daily_change = calculate_ticker_daily_change()
+    df = pd.DataFrame(list(ticker_daily_change.items()), columns=["Date", "收益值"])
+    df = df.sort_values("Date").set_index("Date")
+    col1, col2 = streamlit.columns(2)
+    col1.line_chart(df, x_label="日期", y_label="收益值")
+    col2.line_chart(df, x_label="日期", y_label="收益值")
 
 
 def date():
