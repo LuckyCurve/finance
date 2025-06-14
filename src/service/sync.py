@@ -14,6 +14,7 @@ from yfinance import Ticker
 import db
 from db import engine
 from db.entity import (
+    Account,
     Asset,
     Config,
     CurrencyType,
@@ -45,13 +46,57 @@ def sync():
             sync_config = Config(key=LAST_SYNC_DATE)
 
         sync_exchange_rate()
-        sync_asset()
         sync_ticker_info()
+        sync_asset()
+        sync_account()
 
         sync_config.value = date.today().strftime(DATE_FORMAT)
         if sync_config.id is None:
             session.add(sync_config)
         session.commit()
+
+
+def sync_account():
+    with Session(db.engine) as session:
+        session.query(Account).delete()
+        stocck_asset = session.query(StockAsset).order_by(asc(StockAsset.date)).first()
+        for each_date in pd.date_range(
+            start=stocck_asset.date, end=date.today() - timedelta(1)
+        ):
+            session.add(
+                Account(
+                    date=each_date,
+                    currency=_calculate_each_daily_account(each_date, session),
+                    currency_type=CurrencyType.USD,
+                )
+            )
+        session.commit()
+
+
+def _calculate_each_daily_account(each_date: date, session: Session):
+    stock_assets = session.query(StockAsset).filter(StockAsset.date == each_date).all()
+    res = Decimal(0)
+
+    for stock in stock_assets:
+        current_date = (
+            session.query(TickerInfo)
+            .filter(TickerInfo.ticker == stock.ticker)
+            .filter(TickerInfo.date == each_date)
+            .first()
+        )
+
+        exchange_rate = Decimal(1)
+        if current_date.currency_type != CurrencyType.USD:
+            exchange_rate = (
+                session.query(ExchangedRate)
+                .filter(ExchangedRate.currency_type == current_date.currency_type)
+                .filter(ExchangedRate.date == each_date + timedelta(1))
+                .first()
+                .rate
+            )
+        res += current_date.currency * stock.shares / exchange_rate
+
+    return res
 
 
 def sync_asset():
