@@ -31,9 +31,25 @@ def calculate_ticker_daily_change():
         ):
             res += [
                 (each_date, round(float(earn), 2), ticker)
-                for earn, ticker in calculate_each_daily_change(each_date)
+                for earn, ticker in calculate_each_daily_ticker_change(each_date)
             ]
         df = pd.DataFrame(res, columns=["Date", "Earn", "Ticker"])
+        return df
+
+
+def calculate_ticker_daily_price():
+    with Session(db.engine) as session:
+        res = []
+
+        stocck_asset = session.query(StockAsset).order_by(asc(StockAsset.date)).first()
+        for each_date in pd.date_range(
+            start=stocck_asset.date, end=date.today() - timedelta(1)
+        ):
+            res += [
+                (each_date, round(float(price), 2), ticker)
+                for price, ticker in calculate_each_daily_ticker_price(each_date)
+            ]
+        df = pd.DataFrame(res, columns=["Date", "Price", "Ticker"])
         return df
 
 
@@ -42,7 +58,7 @@ def calculate_each_daily_ticker_price(each_date: date):
         stock_assets = (
             session.query(StockAsset).filter(StockAsset.date == each_date).all()
         )
-        res = Decimal(0)
+        res = []
 
         for stock in stock_assets:
             current_date = get_ticker_close_price(each_date, stock.ticker)
@@ -57,12 +73,17 @@ def calculate_each_daily_ticker_price(each_date: date):
                     .rate
                 )
 
-            res += (current_date.currency / today_exchange_rate) * stock.shares
+            res.append(
+                (
+                    (current_date.currency / today_exchange_rate) * stock.shares,
+                    stock.ticker,
+                )
+            )
 
         return res
 
 
-def calculate_each_daily_change(each_date: date):
+def calculate_each_daily_ticker_change(each_date: date):
     with Session(db.engine) as session:
         stock_assets = (
             session.query(StockAsset).filter(StockAsset.date == each_date).all()

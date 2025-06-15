@@ -15,6 +15,7 @@ from service.calculate import (
     calculate_account_change,
     calculate_each_daily_ticker_price,
     calculate_ticker_daily_change,
+    calculate_ticker_daily_price,
 )
 from service.sync import sync
 
@@ -35,8 +36,10 @@ def get_current_account() -> tuple[Decimal, Decimal, CurrencyType, date]:
 def get_current_ticker() -> tuple[int, int, Literal[CurrencyType.USD], date]:
     current_date = datetime.date.today() - timedelta(1)
     yesterday = datetime.date.today() - timedelta(2)
-    current_date_value = calculate_each_daily_ticker_price(current_date)
-    yesterday_value = calculate_each_daily_ticker_price(yesterday)
+    current_date_value = sum(
+        [i[0] for i in calculate_each_daily_ticker_price(current_date)]
+    )
+    yesterday_value = sum([i[0] for i in calculate_each_daily_ticker_price(yesterday)])
     return (current_date_value, yesterday_value, CurrencyType.USD, current_date)
 
 
@@ -60,9 +63,11 @@ if __name__ == "__main__":
     )
 
     account_change_df = calculate_account_change()
+    ticker_daily_price_df = calculate_ticker_daily_price()
     ticker_daily_change_df = calculate_ticker_daily_change()
 
     col1, col2 = streamlit.columns(2)
+    col1.caption("每日总资产变化图（含汇率波动）")
     col1.bar_chart(
         account_change_df,
         x="Date",
@@ -70,6 +75,17 @@ if __name__ == "__main__":
         x_label="日期",
         y_label="总财富",
     )
+
+    col2.caption("每日股票份额")
+    col2.bar_chart(
+        ticker_daily_price_df,
+        x="Date",
+        y="Price",
+        color="Ticker",
+        x_label="日期",
+        y_label="市场价格",
+    )
+    col2.caption("每日股价涨跌图（含汇率波动）")
     col2.bar_chart(
         ticker_daily_change_df,
         x="Date",
@@ -78,10 +94,6 @@ if __name__ == "__main__":
         x_label="日期",
         y_label="涨跌幅",
     )
-
-    col1, col2, col3, col4, col5, col6 = streamlit.columns(6)
-    col2.caption("每日总资产变化图（含汇率波动）")
-    col5.caption("每日股价涨跌图（含汇率波动）")
 
 
 def date():
