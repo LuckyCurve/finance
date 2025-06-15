@@ -45,7 +45,7 @@ def get_current_ticker() -> tuple[int, int, Literal[CurrencyType.USD], date]:
 
 if __name__ == "__main__":
     streamlit.set_page_config(page_title="我的财富看板", layout="wide")
-    streamlit.title("我的财富看板")
+    streamlit.title(":rainbow[我的财富看板]")
 
     current_account = get_current_account()
     current_ticker = get_current_ticker()
