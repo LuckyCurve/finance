@@ -1,6 +1,8 @@
+import datetime
+from datetime import date, timedelta
 from decimal import Decimal
+from typing import Literal
 
-import pandas as pd
 import streamlit
 from numerize.numerize import numerize
 from sqlalchemy import desc
@@ -9,7 +11,11 @@ from sqlalchemy.orm import Session
 import db
 from db.common import Base
 from db.entity import Account, CurrencyType
-from service.calculate import calculate_ticker_daily_change
+from service.calculate import (
+    calculate_account_change,
+    calculate_each_daily_ticker_price,
+    calculate_ticker_daily_change,
+)
 from service.sync import sync
 
 Base.metadata.create_all(db.engine)
@@ -20,32 +26,62 @@ def format_decimal(data):
     return numerize(round(float(data), 2))
 
 
-def get_current_account() -> tuple[Decimal, Decimal, CurrencyType]:
+def get_current_account() -> tuple[Decimal, Decimal, CurrencyType, date]:
     with Session(db.engine) as session:
         today, yesterday = session.query(Account).order_by(desc(Account.date)).limit(2)
-        return (today.currency, yesterday.currency, today.currency_type)
+        return (today.currency, yesterday.currency, today.currency_type, today.date)
+
+
+def get_current_ticker() -> tuple[int, int, Literal[CurrencyType.USD], date]:
+    current_date = datetime.date.today() - timedelta(1)
+    yesterday = datetime.date.today() - timedelta(2)
+    current_date_value = calculate_each_daily_ticker_price(current_date)
+    yesterday_value = calculate_each_daily_ticker_price(yesterday)
+    return (current_date_value, yesterday_value, CurrencyType.USD, current_date)
 
 
 if __name__ == "__main__":
     streamlit.set_page_config(page_title="我的财富看板", layout="wide")
     streamlit.title("我的财富看板")
 
-    today, yesterday, currency_type = get_current_account()
+    current_account = get_current_account()
+    current_ticker = get_current_ticker()
+
     col1, col2 = streamlit.columns(2)
     col1.metric(
-        label="我的财富总值",
-        value=f"{format_decimal(today)} {currency_type.value}",
-        delta=f"{format_decimal(today - yesterday)}",
+        label=f"我的财富总值 {current_account[3]}",
+        value=f"{format_decimal(current_account[0])} {current_account[2].value}",
+        delta=f"{format_decimal(current_account[0] - current_account[1])}",
     )
-    col2.metric(label="待补充数据", value="70 $", delta="1.2")
+    col2.metric(
+        label=f"我的股市数据 {current_ticker[3]}",
+        value=f"{format_decimal(current_ticker[0])} {current_ticker[2].value}",
+        delta=f"{format_decimal(current_ticker[0] - current_ticker[1])}",
+    )
 
-    ticker_daily_change = calculate_ticker_daily_change()
-    df = pd.DataFrame(ticker_daily_change, columns=["Date", "Earn"])
-    df = df.sort_values("Date").set_index("Date")
+    account_change_df = calculate_account_change()
+    ticker_daily_change_df = calculate_ticker_daily_change()
+
     col1, col2 = streamlit.columns(2)
-    col1.line_chart(df, x_label="日期", y_label="涨跌幅")
-    col1.caption("每日股价涨跌图（含汇率波动）")
-    col2.line_chart(df, x_label="日期", y_label="收益值")
+    col1.bar_chart(
+        account_change_df,
+        x="Date",
+        y="Currency",
+        x_label="日期",
+        y_label="总财富",
+    )
+    col2.bar_chart(
+        ticker_daily_change_df,
+        x="Date",
+        y="Earn",
+        color="Ticker",
+        x_label="日期",
+        y_label="涨跌幅",
+    )
+
+    col1, col2, col3, col4, col5, col6 = streamlit.columns(6)
+    col2.caption("每日总资产变化图（含汇率波动）")
+    col5.caption("每日股价涨跌图（含汇率波动）")
 
 
 def date():
