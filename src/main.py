@@ -3,14 +3,18 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import Literal
 
+import pandas
+import plotly
+import plotly.express
 import streamlit
 from numerize.numerize import numerize
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
+from streamlit.delta_generator import DeltaGenerator
 
 import db
 from db.common import Base
-from db.entity import Account, CurrencyType
+from db.entity import Account, CurrencyAsset, CurrencyType, ExchangedRate
 from service.calculate import (
     calculate_account_change,
     calculate_each_daily_ticker_price,
@@ -43,32 +47,48 @@ def get_current_ticker() -> tuple[int, int, Literal[CurrencyType.USD], date]:
     return (current_date_value, yesterday_value, CurrencyType.USD, current_date)
 
 
-if __name__ == "__main__":
-    streamlit.set_page_config(page_title="我的财富看板", layout="wide")
-    streamlit.title(":rainbow[我的财富看板]")
+def get_current_currency():
+    current_date = datetime.date.today() - timedelta(1)
+    res = 0
+    with Session(db.engine) as session:
+        currency_assets = (
+            session.query(CurrencyAsset)
+            .filter(CurrencyAsset.date == current_date)
+            .all()
+        )
+        for asset in currency_assets:
+            rate = Decimal(1)
+            if not asset.currency_type == CurrencyType.USD:
+                rate = (
+                    session.query(ExchangedRate)
+                    .filter(ExchangedRate.currency_type == asset.currency_type)
+                    .first()
+                    .rate
+                )
 
-    current_account = get_current_account()
-    current_ticker = get_current_ticker()
+            res += asset.currency / rate
+        return round(float(res), 2)
 
-    col1, col2 = streamlit.columns(2)
-    col1.metric(
+
+def draw_left(col: DeltaGenerator):
+    col.metric(
         label=f"我的财富总值 {current_account[3]}",
         value=f"{format_decimal(current_account[0])} {current_account[2].value}",
         delta=f"{format_decimal(current_account[0] - current_account[1])}",
     )
-    col2.metric(
-        label=f"我的股市数据 {current_ticker[3]}",
-        value=f"{format_decimal(current_ticker[0])} {current_ticker[2].value}",
-        delta=f"{format_decimal(current_ticker[0] - current_ticker[1])}",
+
+    current_currency = get_current_currency()
+
+    data = pandas.DataFrame(
+        {"资产类型": ["现金", "股市"], "价格": [current_currency, current_ticker[0]]}
     )
+    fig = plotly.express.pie(data, names="资产类型", values="价格")
+    col.caption("资产分配")
+    col.plotly_chart(fig)
 
     account_change_df = calculate_account_change()
-    ticker_daily_price_df = calculate_ticker_daily_price()
-    ticker_daily_change_df = calculate_ticker_daily_change()
-
-    col1, col2 = streamlit.columns(2)
-    col1.caption("每日总资产变化图（含汇率波动）")
-    col1.bar_chart(
+    col.caption("每日总资产变化图（含汇率波动）")
+    col.line_chart(
         account_change_df,
         x="Date",
         y="Currency",
@@ -76,8 +96,17 @@ if __name__ == "__main__":
         y_label="总财富",
     )
 
-    col2.caption("每日股票份额")
-    col2.bar_chart(
+
+def draw_right(col: DeltaGenerator):
+    ticker_daily_change_df = calculate_ticker_daily_change()
+    ticker_daily_price_df = calculate_ticker_daily_price()
+    col.metric(
+        label=f"我的股市数据 {current_ticker[3]}",
+        value=f"{format_decimal(current_ticker[0])} {current_ticker[2].value}",
+        delta=f"{format_decimal(current_ticker[0] - current_ticker[1])}",
+    )
+    col.caption("每日股票份额")
+    col.bar_chart(
         ticker_daily_price_df,
         x="Date",
         y="Price",
@@ -85,8 +114,8 @@ if __name__ == "__main__":
         x_label="日期",
         y_label="市场价格",
     )
-    col2.caption("每日个股涨跌图（含汇率波动）")
-    col2.bar_chart(
+    col.caption("每日个股涨跌图（含汇率波动）")
+    col.line_chart(
         ticker_daily_change_df,
         x="Date",
         y="Earn",
@@ -94,6 +123,19 @@ if __name__ == "__main__":
         x_label="日期",
         y_label="涨跌幅",
     )
+
+
+if __name__ == "__main__":
+    streamlit.set_page_config(page_title="我的财富看板", page_icon="💰", layout="wide")
+    streamlit.title(":rainbow[我的财富看板]")
+
+    current_account = get_current_account()
+    current_ticker = get_current_ticker()
+
+    col1, col2 = streamlit.columns(2)
+
+    draw_left(col1)
+    draw_right(col2)
 
 
 def date():
