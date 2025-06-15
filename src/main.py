@@ -85,7 +85,7 @@ if __name__ == "__main__":
         x_label="日期",
         y_label="市场价格",
     )
-    col2.caption("每日股价涨跌图（含汇率波动）")
+    col2.caption("每日个股涨跌图（含汇率波动）")
     col2.bar_chart(
         ticker_daily_change_df,
         x="Date",
@@ -111,3 +111,4 @@ def date():
     # buy_currency(645576.25, CurrencyType.CNY, comment="微众银行")
     # buy_currency(51714.94, CurrencyType.CNY, comment="招商银行")
     # buy_currency(129715.35, CurrencyType.HKD, comment="汇丰香港")
+    # buy_currency(1228.95, CurrencyType.USD, comment="富途牛牛货币基金")
