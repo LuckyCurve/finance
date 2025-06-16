@@ -49,7 +49,7 @@ def get_current_ticker() -> tuple[int, int, Literal[CurrencyType.USD], date]:
 
 def get_current_currency():
     current_date = datetime.date.today() - timedelta(1)
-    res = 0
+    res = []
     with Session(db.engine) as session:
         currency_assets = (
             session.query(CurrencyAsset)
@@ -65,9 +65,11 @@ def get_current_currency():
                     .first()
                     .rate
                 )
+            res.append(
+                (asset.currency_type.value, round(float(asset.currency / rate), 2))
+            )
 
-            res += asset.currency / rate
-        return round(float(res), 2)
+        return res
 
 
 def draw_left(col: DeltaGenerator):
@@ -80,14 +82,18 @@ def draw_left(col: DeltaGenerator):
     current_currency = get_current_currency()
 
     data = pandas.DataFrame(
-        {"资产类型": ["现金", "股市"], "价格": [current_currency, current_ticker[0]]}
+        {
+            "资产类型": ["股市"]
+            + [currency_type for currency_type, _ in current_currency],
+            "价格": [current_ticker[0]] + [value for _, value in current_currency],
+        }
     )
     fig = plotly.express.pie(data, names="资产类型", values="价格")
     col.caption("资产分配")
     col.plotly_chart(fig)
 
     account_change_df = calculate_account_change()
-    col.caption("每日总资产变化图（含汇率波动）")
+    col.caption("每日总资产变化图")
     col.line_chart(
         account_change_df,
         x="Date",
@@ -122,7 +128,7 @@ def draw_right(col: DeltaGenerator):
         x_label="日期",
         y_label="市场价格",
     )
-    col.caption("每日个股涨跌图（含汇率波动）")
+    col.caption("每日个股涨跌图")
     col.line_chart(
         ticker_daily_change_df,
         x="Date",
