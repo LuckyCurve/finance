@@ -105,6 +105,14 @@ def draw_right(col: DeltaGenerator):
         value=f"{format_decimal(current_ticker[0])} {current_ticker[2].value}",
         delta=f"{format_decimal(current_ticker[0] - current_ticker[1])}",
     )
+
+    data = ticker_daily_price_df[
+        ticker_daily_price_df["Date"].dt.date == datetime.date.today() - timedelta(1)
+    ]
+    data = data[["Price", "Ticker"]]
+    fig = plotly.express.pie(data, names="Ticker", values="Price")
+    col.caption("持有股票份额")
+    col.plotly_chart(fig)
     col.caption("每日股票份额")
     col.bar_chart(
         ticker_daily_price_df,
