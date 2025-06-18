@@ -1,23 +1,22 @@
 import datetime
-from datetime import date, timedelta
-from decimal import Decimal
-from typing import Literal
+from datetime import timedelta
 
 import pandas
 import plotly
 import plotly.express
 import streamlit
-from numerize.numerize import numerize
-from sqlalchemy import desc
-from sqlalchemy.orm import Session
 from streamlit.delta_generator import DeltaGenerator
 
 import db
+from adaptor.inbound.show_data import (
+    format_decimal,
+    get_current_account,
+    get_current_currencies,
+    get_current_ticker,
+)
 from db.common import Base
-from db.entity import Account, CurrencyAsset, CurrencyType, ExchangedRate
 from service.calculate import (
     calculate_account_change,
-    calculate_each_daily_ticker_price,
     calculate_ticker_daily_change,
     calculate_ticker_daily_price,
 )
@@ -27,51 +26,6 @@ Base.metadata.create_all(db.engine)
 sync()
 
 
-def format_decimal(data):
-    return numerize(round(float(data), 2))
-
-
-def get_current_account() -> tuple[Decimal, Decimal, CurrencyType, date]:
-    with Session(db.engine) as session:
-        today, yesterday = session.query(Account).order_by(desc(Account.date)).limit(2)
-        return (today.currency, yesterday.currency, today.currency_type, today.date)
-
-
-def get_current_ticker() -> tuple[int, int, Literal[CurrencyType.USD], date]:
-    current_date = datetime.date.today() - timedelta(1)
-    yesterday = datetime.date.today() - timedelta(2)
-    current_date_value = sum(
-        [i[0] for i in calculate_each_daily_ticker_price(current_date)]
-    )
-    yesterday_value = sum([i[0] for i in calculate_each_daily_ticker_price(yesterday)])
-    return (current_date_value, yesterday_value, CurrencyType.USD, current_date)
-
-
-def get_current_currency():
-    current_date = datetime.date.today() - timedelta(1)
-    res = []
-    with Session(db.engine) as session:
-        currency_assets = (
-            session.query(CurrencyAsset)
-            .filter(CurrencyAsset.date == current_date)
-            .all()
-        )
-        for asset in currency_assets:
-            rate = Decimal(1)
-            if not asset.currency_type == CurrencyType.USD:
-                rate = (
-                    session.query(ExchangedRate)
-                    .filter(ExchangedRate.currency_type == asset.currency_type)
-                    .first()
-                    .rate
-                )
-            res.append(
-                (asset.currency_type.value, round(float(asset.currency / rate), 2))
-            )
-
-        return res
-
-
 def draw_left(col: DeltaGenerator):
     col.metric(
         label=f"我的财富总值 {current_account[3]}",
@@ -79,7 +33,7 @@ def draw_left(col: DeltaGenerator):
         delta=f"{format_decimal(current_account[0] - current_account[1])}",
     )
 
-    current_currency = get_current_currency()
+    current_currency = get_current_currencies()
 
     data = pandas.DataFrame(
         {
@@ -152,7 +106,7 @@ if __name__ == "__main__":
     draw_right(col2)
 
 
-def date():
+def test():
     pass
     # buy_stock("0700.HK", date(2025, 6, 11), 165, 303.03)
     # buy_stock("0700.HK", date(2025, 6, 11), 166, 343.8)

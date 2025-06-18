@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from yfinance import Ticker
 
 import db
+from adaptor.outbound import currency
 from db import engine
 from db.entity import (
     Account,
@@ -27,7 +28,6 @@ from db.entity import (
     Transaction,
     TransactionType,
 )
-from outbound import currency
 from service.ticker import get_ticker_close_price
 
 LAST_SYNC_DATE = "last_sync_date"
@@ -57,6 +57,7 @@ def sync():
         if sync_config.id is None:
             session.add(sync_config)
         session.commit()
+        print("所有数据均同步成功!")
 
 
 def sync_account():
@@ -250,7 +251,7 @@ def sync_exchange_rate() -> None:
             for day in days:
                 res += [
                     ExchangedRate(currency_type=currency_type, rate=rate, date=day)
-                    for currency_type, rate in currency.get_currency(day).items()
+                    for currency_type, rate in currency.get_exchange_rate(day).items()
                 ]
             session.add_all(res)
         else:
@@ -269,7 +270,7 @@ def sync_exchange_rate() -> None:
             for day in days:
                 res += [
                     ExchangedRate(currency_type=currency_type, rate=rate, date=day)
-                    for currency_type, rate in currency.get_currency(day).items()
+                    for currency_type, rate in currency.get_exchange_rate(day).items()
                 ]
             session.add_all(res)
 

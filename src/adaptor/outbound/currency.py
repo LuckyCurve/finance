@@ -7,7 +7,7 @@ from curl_cffi import requests
 from db.entity import CurrencyType
 
 
-def get_currency(time: date) -> Dict[str, Decimal]:
+def get_exchange_rate(time: date) -> Dict[str, Decimal]:
     """获取 USD 兑其他货币的汇率数据
 
     Args:
@@ -28,4 +28,4 @@ def get_currency(time: date) -> Dict[str, Decimal]:
 
 
 if __name__ == "__main__":
-    print(get_currency(date.today()))
+    print(get_exchange_rate(date.today()))
