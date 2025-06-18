@@ -122,3 +122,5 @@ def test():
     # buy_currency(51714.94, CurrencyType.CNY, comment="招商银行")
     # buy_currency(129715.35, CurrencyType.HKD, comment="汇丰香港")
     # buy_currency(1228.95, CurrencyType.USD, comment="富途牛牛货币基金")
+    # adjust_currency(30173.42 + 557825.3, CurrencyType.CNY)
+    # adjust_currency(20030.04 + 229715.35, CurrencyType.HKD)

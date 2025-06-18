@@ -15,11 +15,32 @@ from db.entity import (
 
 
 def buy_currency(
-    currency: float | str, currency_type: CurrencyType, comment: str
+    currency: float | str | Decimal, currency_type: CurrencyType, comment: str
 ) -> None:
+    if not isinstance(currency, Decimal):
+        currency = Decimal(currency)
+
     t = CurrencyTransaction(
         date=date.today(),
         type=TransactionType.BUY,
+        currency=Decimal(currency),
+        currency_type=currency_type,
+        comment=comment,
+    )
+    with Session(db.engine) as session:
+        session.add(t)
+        session.commit()
+
+
+def sell_currency(
+    currency: float | str | Decimal, currency_type: CurrencyType, comment: str
+) -> None:
+    if not isinstance(currency, Decimal):
+        currency = Decimal(currency)
+
+    t = CurrencyTransaction(
+        date=date.today(),
+        type=TransactionType.SELL,
         currency=Decimal(currency),
         currency_type=currency_type,
         comment=comment,
