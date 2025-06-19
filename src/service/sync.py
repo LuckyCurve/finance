@@ -244,7 +244,7 @@ def sync_exchange_rate() -> None:
             )
             days = [
                 cloest_date + timedelta(days=x)
-                for x in range(0, (date.today() - cloest_date).days)
+                for x in range(0, (date.today() - cloest_date).days - 1)
             ]
 
             res = []
