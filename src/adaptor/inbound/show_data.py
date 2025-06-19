@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 import db
 from db.entity import Account, CurrencyAsset, CurrencyType, ExchangedRate
-from service.calculate import calculate_each_daily_ticker_price
+from service.calculate import calculate_each_day_ticker_price
 
 
 def format_decimal(data) -> str:
@@ -44,9 +44,9 @@ def get_current_ticker() -> tuple[Decimal, Decimal, Literal[CurrencyType.USD], d
     current_date = date.today() - timedelta(1)
     yesterday = date.today() - timedelta(2)
     current_date_value = sum(
-        [i[0] for i in calculate_each_daily_ticker_price(current_date)]
+        [i[0] for i in calculate_each_day_ticker_price(current_date)]
     )
-    yesterday_value = sum([i[0] for i in calculate_each_daily_ticker_price(yesterday)])
+    yesterday_value = sum([i[0] for i in calculate_each_day_ticker_price(yesterday)])
     return (current_date_value, yesterday_value, CurrencyType.USD, current_date)
 
 

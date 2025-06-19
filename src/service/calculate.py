@@ -31,7 +31,7 @@ def calculate_ticker_daily_change():
         ):
             res += [
                 (each_date, round(float(earn), 2), ticker)
-                for earn, ticker in calculate_each_daily_ticker_change(each_date)
+                for earn, ticker in calculate_each_day_ticker_change(each_date)
             ]
         df = pd.DataFrame(res, columns=["Date", "Earn", "Ticker"])
         return df
@@ -47,13 +47,51 @@ def calculate_ticker_daily_price():
         ):
             res += [
                 (each_date, round(float(price), 2), ticker)
-                for price, ticker in calculate_each_daily_ticker_price(each_date)
+                for price, ticker in calculate_each_day_ticker_price(each_date)
             ]
         df = pd.DataFrame(res, columns=["Date", "Price", "Ticker"])
         return df
 
 
-def calculate_each_daily_ticker_price(each_date: date):
+def calculate_ticker_daily_total_earn_rate():
+    with Session(db.engine) as session:
+        res = []
+
+        stocck_asset = session.query(StockAsset).order_by(asc(StockAsset.date)).first()
+        for each_date in pd.date_range(
+            start=stocck_asset.date, end=date.today() - timedelta(1)
+        ):
+            res += [
+                (each_date, round(float(price), 2), ticker)
+                for price, ticker in calculate_each_day_ticker_total_earn_rate(
+                    each_date
+                )
+            ]
+        df = pd.DataFrame(res, columns=["Date", "TotalEarnRate", "Ticker"])
+        return df
+
+
+def calculate_each_day_ticker_total_earn_rate(each_date: date):
+    with Session(db.engine) as session:
+        stock_assets = (
+            session.query(StockAsset).filter(StockAsset.date == each_date).all()
+        )
+        res = []
+
+        for stock in stock_assets:
+            current_date = get_ticker_close_price(each_date, stock.ticker)
+
+            res.append(
+                (
+                    (current_date.currency - stock.price) * 100 / stock.price,
+                    stock.ticker,
+                )
+            )
+
+        return res
+
+
+def calculate_each_day_ticker_price(each_date: date):
     with Session(db.engine) as session:
         stock_assets = (
             session.query(StockAsset).filter(StockAsset.date == each_date).all()
@@ -83,7 +121,7 @@ def calculate_each_daily_ticker_price(each_date: date):
         return res
 
 
-def calculate_each_daily_ticker_change(each_date: date):
+def calculate_each_day_ticker_change(each_date: date):
     with Session(db.engine) as session:
         stock_assets = (
             session.query(StockAsset).filter(StockAsset.date == each_date).all()

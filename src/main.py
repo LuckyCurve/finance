@@ -19,6 +19,7 @@ from service.calculate import (
     calculate_account_change,
     calculate_ticker_daily_change,
     calculate_ticker_daily_price,
+    calculate_ticker_daily_total_earn_rate,
 )
 from service.sync import sync
 
@@ -58,7 +59,6 @@ def draw_left(col: DeltaGenerator):
 
 
 def draw_right(col: DeltaGenerator):
-    ticker_daily_change_df = calculate_ticker_daily_change()
     ticker_daily_price_df = calculate_ticker_daily_price()
     col.metric(
         label=f"我的股市数据 {current_ticker[3]}",
@@ -73,6 +73,17 @@ def draw_right(col: DeltaGenerator):
     fig = plotly.express.pie(data, names="Ticker", values="Price")
     col.caption("持有股票份额")
     col.plotly_chart(fig)
+
+    col.caption("个股营收百分比%")
+    col.line_chart(
+        calculate_ticker_daily_total_earn_rate(),
+        x="Date",
+        y="TotalEarnRate",
+        color="Ticker",
+        x_label="日期",
+        y_label="总收益百分比",
+    )
+
     col.caption("每日股票份额")
     col.bar_chart(
         ticker_daily_price_df,
@@ -82,9 +93,10 @@ def draw_right(col: DeltaGenerator):
         x_label="日期",
         y_label="市场价格",
     )
+
     col.caption("每日个股涨跌图")
     col.line_chart(
-        ticker_daily_change_df,
+        calculate_ticker_daily_change(),
         x="Date",
         y="Earn",
         color="Ticker",
