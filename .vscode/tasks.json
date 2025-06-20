@@ -8,6 +8,12 @@
 			"type": "shell",
 			"command": "streamlit run ./src/main.py",
 			"problemMatcher": []
+		},
+		{
+			"label": "update dependencies",
+			"type": "shell",
+			"command": "uv sync -U",
+			"problemMatcher": []
 		}
 	]
 }
