@@ -3,13 +3,27 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import List, Literal
 
+import pandas as pd
 from numerize.numerize import numerize
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 import db
-from db.entity import Account, CurrencyAsset, CurrencyType, ExchangedRate
+from db.entity import (
+    Account,
+    CurrencyAsset,
+    CurrencyTransaction,
+    CurrencyType,
+    ExchangedRate,
+    StockTransaction,
+    TransactionType,
+)
 from service.calculate import calculate_each_day_ticker_price
+
+TRANSACTION_TYPE_DICT = {
+    TransactionType.BUY: ":green[买入]",
+    TransactionType.SELL: ":red[卖出]",
+}
 
 
 def format_decimal(data) -> str:
@@ -80,3 +94,65 @@ def get_current_currencies() -> List:
             )
 
         return res
+
+
+def get_ticker_transaction_details():
+    with Session(db.engine) as session:
+        res = [
+            (
+                stock.id,
+                stock.ticker,
+                TRANSACTION_TYPE_DICT[stock.type],
+                format_decimal(stock.price),
+                format_decimal(stock.shares),
+                stock.date,
+                stock.comment,
+            )
+            for stock in session.query(StockTransaction)
+            .order_by(desc(StockTransaction.id))
+            .all()
+        ]
+        df = pd.DataFrame(
+            res,
+            columns=[
+                "ID",
+                "代码",
+                "操作记录",
+                "价格",
+                "份额",
+                "日期",
+                "备注",
+            ],
+        )
+        df.set_index("ID", inplace=True)
+        return df
+
+
+def get_currency_transaction_details():
+    with Session(db.engine) as session:
+        res = [
+            (
+                currency.id,
+                currency.currency_type.value,
+                TRANSACTION_TYPE_DICT[currency.type],
+                format_decimal(currency.currency),
+                currency.date,
+                currency.comment,
+            )
+            for currency in session.query(CurrencyTransaction)
+            .order_by(desc(CurrencyTransaction.id))
+            .all()
+        ]
+        df = pd.DataFrame(
+            res,
+            columns=[
+                "ID",
+                "货币类型",
+                "操作记录",
+                "价格",
+                "日期",
+                "备注",
+            ],
+        )
+        df.set_index("ID", inplace=True)
+        return df

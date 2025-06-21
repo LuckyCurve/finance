@@ -10,9 +10,11 @@ from streamlit.delta_generator import DeltaGenerator
 import db
 from adaptor.inbound.show_data import (
     format_decimal,
+    get_currency_transaction_details,
     get_current_account,
     get_current_currencies,
     get_current_ticker,
+    get_ticker_transaction_details,
 )
 from db.common import Base
 from service.calculate import (
@@ -101,6 +103,16 @@ def draw_right(col: DeltaGenerator):
     )
 
 
+def draw_details():
+    streamlit.caption("股票交易详细数据")
+    ticker_details = get_ticker_transaction_details()
+    streamlit.table(ticker_details)
+
+    streamlit.caption("现金交易详细数据")
+    currency_details = get_currency_transaction_details()
+    streamlit.table(currency_details)
+
+
 if __name__ == "__main__":
     streamlit.set_page_config(page_title="我的财富看板", page_icon="💰", layout="wide")
     streamlit.title(":rainbow[我的财富看板]")
@@ -117,6 +129,8 @@ if __name__ == "__main__":
 
     draw_left(col1)
     draw_right(col2)
+
+    draw_details()
 
     streamlit.balloons()
     # streamlit.snow()
