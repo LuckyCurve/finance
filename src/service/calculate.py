@@ -106,7 +106,7 @@ def calculate_each_day_ticker_price(each_date: date):
                 today_exchange_rate = (
                     session.query(ExchangedRate)
                     .filter(ExchangedRate.currency_type == current_date.currency_type)
-                    .filter(ExchangedRate.date == each_date + timedelta(1))
+                    .filter(ExchangedRate.date == each_date)
                     .first()
                     .rate
                 )
@@ -138,14 +138,14 @@ def calculate_each_day_ticker_change(each_date: date):
                 yesterday_exchange_rate = (
                     session.query(ExchangedRate)
                     .filter(ExchangedRate.currency_type == current_date.currency_type)
-                    .filter(ExchangedRate.date == each_date)
+                    .filter(ExchangedRate.date == each_date - timedelta(1))
                     .first()
                     .rate
                 )
                 today_exchange_rate = (
                     session.query(ExchangedRate)
                     .filter(ExchangedRate.currency_type == current_date.currency_type)
-                    .filter(ExchangedRate.date == each_date + timedelta(1))
+                    .filter(ExchangedRate.date == each_date)
                     .first()
                     .rate
                 )

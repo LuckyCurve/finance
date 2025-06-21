@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Dict, List
 
 import pandas as pd
-from sqlalchemy import asc, desc, func, select
+from sqlalchemy import asc, func, select
 from sqlalchemy.orm import Session
 from yfinance import Ticker
 
@@ -111,7 +111,7 @@ def _calculate_stock_each_daily_account(each_date: date, session: Session):
             exchange_rate = (
                 session.query(ExchangedRate)
                 .filter(ExchangedRate.currency_type == current_date.currency_type)
-                .filter(ExchangedRate.date == each_date + timedelta(1))
+                .filter(ExchangedRate.date == each_date)
                 .first()
                 .rate
             )
@@ -237,42 +237,19 @@ def _sync_stock_asset(session):
 
 def sync_exchange_rate() -> None:
     with Session(engine) as session:
-        count = session.query(ExchangedRate).count()
-        if count == 0:
-            cloest_date = (
-                session.query(Transaction).order_by(desc(Transaction.date)).first().date
-            )
-            days = [
-                cloest_date + timedelta(days=x)
-                for x in range(0, (date.today() - cloest_date).days - 1)
-            ]
+        session.query(ExchangedRate).delete()
 
-            res = []
-            for day in days:
-                res += [
-                    ExchangedRate(currency_type=currency_type, rate=rate, date=day)
-                    for currency_type, rate in currency.get_exchange_rate(day).items()
-                ]
-            session.add_all(res)
-        else:
-            cloest_date = (
-                session.query(ExchangedRate)
-                .order_by(desc(ExchangedRate.date))
-                .first()
-                .date
-            )
-            days = [
-                cloest_date + timedelta(days=x)
-                for x in range(1, (date.today() - cloest_date).days + 1)
-            ]
+        cloest_date = (
+            session.query(Transaction).order_by(asc(Transaction.date)).first().date
+        )
 
-            res = []
-            for day in days:
-                res += [
-                    ExchangedRate(currency_type=currency_type, rate=rate, date=day)
-                    for currency_type, rate in currency.get_exchange_rate(day).items()
-                ]
-            session.add_all(res)
+        res = []
+        for day in pd.date_range(start=cloest_date, end=date.today() - timedelta(1)):
+            res += [
+                ExchangedRate(currency_type=currency_type, rate=rate, date=day)
+                for currency_type, rate in currency.get_exchange_rate(day).items()
+            ]
+        session.add_all(res)
 
         session.commit()
 
