@@ -23,9 +23,6 @@ from service.calculate import (
 )
 from service.sync import sync
 
-Base.metadata.create_all(db.engine)
-sync()
-
 
 def draw_left(col: DeltaGenerator):
     col.metric(
@@ -57,9 +54,18 @@ def draw_left(col: DeltaGenerator):
         y_label="总财富",
     )
 
+    col.caption("每日股票份额")
+    col.bar_chart(
+        ticker_daily_price_df,
+        x="Date",
+        y="Price",
+        color="Ticker",
+        x_label="日期",
+        y_label="市场价格",
+    )
+
 
 def draw_right(col: DeltaGenerator):
-    ticker_daily_price_df = calculate_ticker_daily_price()
     col.metric(
         label=f"我的股市数据 {current_ticker[3]}",
         value=f"{format_decimal(current_ticker[0])} {current_ticker[2].value}",
@@ -84,16 +90,6 @@ def draw_right(col: DeltaGenerator):
         y_label="总收益百分比",
     )
 
-    col.caption("每日股票份额")
-    col.bar_chart(
-        ticker_daily_price_df,
-        x="Date",
-        y="Price",
-        color="Ticker",
-        x_label="日期",
-        y_label="市场价格",
-    )
-
     col.caption("每日个股涨跌图")
     col.line_chart(
         calculate_ticker_daily_change(),
@@ -109,30 +105,18 @@ if __name__ == "__main__":
     streamlit.set_page_config(page_title="我的财富看板", page_icon="💰", layout="wide")
     streamlit.title(":rainbow[我的财富看板]")
 
+    with streamlit.spinner("数据同步中...", show_time=True):
+        Base.metadata.create_all(db.engine)
+        sync()
+
     current_account = get_current_account()
     current_ticker = get_current_ticker()
+    ticker_daily_price_df = calculate_ticker_daily_price()
 
     col1, col2 = streamlit.columns(2)
 
     draw_left(col1)
     draw_right(col2)
 
-
-def test():
-    pass
-    # buy_stock("0700.HK", date(2025, 6, 11), 165, 303.03)
-    # buy_stock("0700.HK", date(2025, 6, 11), 166, 343.8)
-    # buy_stock("GOOGL", date(2025, 6, 11), 1.8184, 154.17)
-    # buy_stock("IAU", date(2025, 6, 11), 4.5126, 55.48)
-    # buy_stock("SPLG", date(2025, 6, 11), 30.5197, 64.02)
-    # buy_stock("GGB", date(2025, 6, 11), 338.9833, 2.95)
-    # buy_stock("BIDU", date(2025, 6, 11), 15.3333, 84.57)
-    # buy_stock("QQQM", date(2025, 6, 11), 4.6773, 213.87)
-    # buy_stock("SGOV", date(2025, 6, 11), 222.4285, 100.49)
-    # buy_stock("PDD", date(2025, 6, 11), 0.8267, 121.38)
-    # buy_currency(645576.25, CurrencyType.CNY, comment="微众银行")
-    # buy_currency(51714.94, CurrencyType.CNY, comment="招商银行")
-    # buy_currency(129715.35, CurrencyType.HKD, comment="汇丰香港")
-    # buy_currency(1228.95, CurrencyType.USD, comment="富途牛牛货币基金")
-    # adjust_currency(30173.42 + 557825.3, CurrencyType.CNY)
-    # adjust_currency(20030.04 + 229715.35, CurrencyType.HKD)
+    streamlit.balloons()
+    # streamlit.snow()
