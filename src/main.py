@@ -14,6 +14,7 @@ from adaptor.inbound.show_data import (
     get_current_account,
     get_current_currencies,
     get_current_ticker,
+    get_exchange_rate_details,
     get_ticker_transaction_details,
 )
 from db.common import Base
@@ -111,6 +112,17 @@ def draw_details():
     streamlit.caption("现金交易详细数据")
     currency_details = get_currency_transaction_details()
     streamlit.table(currency_details)
+
+    streamlit.caption("汇率波动")
+    exchange_rate = get_exchange_rate_details()
+    streamlit.line_chart(
+        exchange_rate,
+        x="日期",
+        y="汇率",
+        color="货币类型",
+        x_label="日期",
+        y_label="汇率",
+    )
 
 
 if __name__ == "__main__":

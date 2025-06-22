@@ -156,3 +156,23 @@ def get_currency_transaction_details():
         )
         df.set_index("ID", inplace=True)
         return df
+
+
+def get_exchange_rate_details():
+    with Session(db.engine) as session:
+        res = [
+            (
+                rate.id,
+                rate.currency_type.value,
+                format_decimal(rate.rate),
+                rate.date,
+            )
+            for rate in session.query(ExchangedRate)
+            .filter(ExchangedRate.currency_type != CurrencyType.USD)
+            .all()
+        ]
+        df = pd.DataFrame(
+            res,
+            columns=["ID", "货币类型", "汇率", "日期"],
+        )
+        return df
