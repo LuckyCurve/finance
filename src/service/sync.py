@@ -29,6 +29,7 @@ from db.entity import (
     TransactionType,
 )
 from service.ticker import get_ticker_close_price
+from utils.timing import timing_decorator
 
 LAST_SYNC_DATE = "last_sync_date"
 
@@ -60,6 +61,7 @@ def sync():
         print("所有数据均同步成功!")
 
 
+@timing_decorator
 def sync_account():
     with Session(db.engine) as session:
         session.query(Account).delete()
@@ -120,6 +122,7 @@ def _calculate_stock_each_daily_account(each_date: date, session: Session):
     return res
 
 
+@timing_decorator
 def sync_asset():
     with Session(engine) as session:
         session.query(Asset).delete()
@@ -235,6 +238,7 @@ def _sync_stock_asset(session):
     session.add_all(assets)
 
 
+@timing_decorator
 def sync_exchange_rate() -> None:
     with Session(engine) as session:
         session.query(ExchangedRate).delete()
@@ -254,6 +258,7 @@ def sync_exchange_rate() -> None:
         session.commit()
 
 
+@timing_decorator
 def sync_ticker_info():
     with Session(db.engine) as session:
         sql = select(StockTransaction.ticker, func.min(StockTransaction.date)).group_by(
