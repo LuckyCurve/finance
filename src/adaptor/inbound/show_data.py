@@ -164,7 +164,7 @@ def get_exchange_rate_details():
             (
                 rate.id,
                 rate.currency_type.value,
-                format_decimal(rate.rate),
+                float(rate.rate),
                 rate.date,
             )
             for rate in session.query(ExchangedRate)
