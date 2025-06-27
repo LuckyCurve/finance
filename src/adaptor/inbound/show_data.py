@@ -106,7 +106,6 @@ def get_ticker_transaction_details():
                 format_decimal(stock.price),
                 format_decimal(stock.shares),
                 stock.date,
-                stock.comment,
             )
             for stock in session.query(StockTransaction)
             .order_by(desc(StockTransaction.id))
@@ -121,7 +120,6 @@ def get_ticker_transaction_details():
                 "价格",
                 "份额",
                 "日期",
-                "备注",
             ],
         )
         df.set_index("ID", inplace=True)
