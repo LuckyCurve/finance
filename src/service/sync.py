@@ -9,10 +9,15 @@ from typing import Dict, List
 import pandas as pd
 from sqlalchemy import asc, func, select
 from sqlalchemy.orm import Session
-from yfinance import Ticker
 
 import db
 from adaptor.outbound import currency
+from adaptor.outbound.ticker import (
+    get_all_hk_symbols,
+    get_all_us_symbols,
+    get_hk_ticker_history,
+    get_us_ticker_history,
+)
 from db import engine
 from db.entity import (
     Account,
@@ -25,6 +30,8 @@ from db.entity import (
     StockAsset,
     StockTransaction,
     TickerInfo,
+    TickerSymbol,
+    TickerType,
     Transaction,
     TransactionType,
 )
@@ -260,6 +267,9 @@ def sync_exchange_rate() -> None:
 
 @timing_decorator
 def sync_ticker_info():
+    sync_hk_ticker_symbol()
+    sync_us_ticker_symbol()
+
     with Session(db.engine) as session:
         sql = select(StockTransaction.ticker, func.min(StockTransaction.date)).group_by(
             StockTransaction.ticker
@@ -268,18 +278,85 @@ def sync_ticker_info():
         session.query(TickerInfo).delete()
 
         for ticker_name, buy_date in session.execute(sql).all():
-            ticker = Ticker(ticker_name)
-
+            symbol = search_ticker_symbol(ticker_name)
             ticker_infos = []
-            currency_type = CurrencyType(ticker.fast_info["currency"])
-            for i, row in ticker.history(start=buy_date, end=date.today()).iterrows():
-                ticker_infos.append(
+            currency_type = None
+
+            if symbol.ticker_type == TickerType.USD:
+                ticker_infos = get_us_ticker_history(
+                    symbol.symbol,
+                    start_date=buy_date,
+                    end_date=date.today() - timedelta(1),
+                )
+                currency_type = CurrencyType.USD
+            elif symbol.ticker_type == TickerType.HKD:
+                ticker_infos = get_hk_ticker_history(
+                    symbol.symbol,
+                    start_date=buy_date,
+                    end_date=date.today() - timedelta(1),
+                )
+                currency_type = CurrencyType.HKD
+
+            session.add_all(
+                [
                     TickerInfo(
-                        date=i.date(),
+                        date=date,
                         ticker=ticker_name,
-                        currency=Decimal(row["Close"]),
+                        currency=Decimal(price),
                         currency_type=currency_type,
                     )
-                )
-            session.add_all(ticker_infos)
+                    for (date, price) in ticker_infos
+                ]
+            )
             session.commit()
+
+
+def search_ticker_symbol(symbol: str) -> TickerSymbol:
+    with Session(db.engine) as session:
+        return (
+            session.query(TickerSymbol)
+            .filter(TickerSymbol.symbol.like(f"%{symbol}"))
+            .first()
+        )
+
+
+def sync_us_ticker_symbol():
+    with Session(db.engine) as session:
+        count = (
+            session.query(TickerSymbol)
+            .filter(TickerSymbol.ticker_type == TickerType.USD)
+            .count()
+        )
+
+        if count > 0:
+            return
+
+        session.add_all(
+            [
+                TickerSymbol(symbol=symbol, name=name, ticker_type=TickerType.USD)
+                for (name, symbol) in get_all_us_symbols()
+            ]
+        )
+
+        session.commit()
+
+
+def sync_hk_ticker_symbol():
+    with Session(db.engine) as session:
+        count = (
+            session.query(TickerSymbol)
+            .filter(TickerSymbol.ticker_type == TickerType.HKD)
+            .count()
+        )
+
+        if count > 0:
+            return
+
+        session.add_all(
+            [
+                TickerSymbol(symbol=symbol, name=name, ticker_type=TickerType.HKD)
+                for (name, symbol) in get_all_hk_symbols()
+            ]
+        )
+
+        session.commit()

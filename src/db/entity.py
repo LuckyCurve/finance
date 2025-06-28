@@ -155,3 +155,20 @@ class TickerInfo(Base):
     currency_type: Mapped[CurrencyType] = mapped_column(
         Enum(CurrencyType), nullable=False, comment="美元兑换的货币单位"
     )
+
+
+class TickerType(enum.Enum):
+    # 美股
+    USD = "USD"
+    # 港股
+    HKD = "HKD"
+
+
+class TickerSymbol(Base):
+    __tablename__ = "ticker_symbol"
+
+    symbol: Mapped[str] = mapped_column(String, nullable=False, comment="股票代码")
+    name: Mapped[str] = mapped_column(String, nullable=True, comment="股票名称")
+    ticker_type: Mapped[TickerType] = mapped_column(
+        Enum(TickerType), nullable=False, comment="股票类型"
+    )
