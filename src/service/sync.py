@@ -2,6 +2,7 @@
 
 
 import datetime
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import Dict, List
@@ -254,13 +255,22 @@ def sync_exchange_rate() -> None:
             session.query(Transaction).order_by(asc(Transaction.date)).first().date
         )
 
-        res = []
-        for day in pd.date_range(start=cloest_date, end=date.today() - timedelta(1)):
-            res += [
-                ExchangedRate(currency_type=currency_type, rate=rate, date=day)
-                for currency_type, rate in currency.get_exchange_rate(day).items()
-            ]
-        session.add_all(res)
+        exchanged_rates = []
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            results = executor.map(
+                currency.get_exchange_rate,
+                list(pd.date_range(start=cloest_date, end=date.today() - timedelta(1))),
+            )
+
+            for result in results:
+                exchanged_rates += [
+                    ExchangedRate(
+                        currency_type=currency_type, rate=rate, date=result[0]
+                    )
+                    for currency_type, rate in result[1].items()
+                ]
+
+        session.add_all(exchanged_rates)
 
         session.commit()
 
