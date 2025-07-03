@@ -105,14 +105,6 @@ def draw_right(col: DeltaGenerator):
 
 
 def draw_details():
-    streamlit.caption("股票交易详细数据")
-    ticker_details = get_ticker_transaction_details()
-    streamlit.table(ticker_details)
-
-    streamlit.caption("现金交易详细数据")
-    currency_details = get_currency_transaction_details()
-    streamlit.table(currency_details)
-
     streamlit.caption("汇率波动")
     exchange_rate = get_exchange_rate_details()
     streamlit.line_chart(
@@ -123,6 +115,14 @@ def draw_details():
         x_label="日期",
         y_label="汇率",
     )
+
+    streamlit.caption("股票交易详细数据")
+    ticker_details = get_ticker_transaction_details()
+    streamlit.table(ticker_details)
+
+    streamlit.caption("现金交易详细数据")
+    currency_details = get_currency_transaction_details()
+    streamlit.table(currency_details)
 
 
 if __name__ == "__main__":
