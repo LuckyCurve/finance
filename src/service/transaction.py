@@ -2,7 +2,6 @@ from datetime import date
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
-from yfinance import Ticker
 
 import db
 from db.entity import (
@@ -12,6 +11,7 @@ from db.entity import (
     StockTransaction,
     TransactionType,
 )
+from service.sync import search_ticker_symbol
 
 
 def buy_currency(
@@ -67,5 +67,4 @@ def buy_stock(symbol: str, date: date, number: str | float, price: str | float) 
 
 
 def stock_exists(symbol: str) -> bool:
-    t = Ticker(symbol)
-    return "open" in t.info
+    return search_ticker_symbol(symbol) is not None
