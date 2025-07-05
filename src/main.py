@@ -146,3 +146,7 @@ if __name__ == "__main__":
 
     streamlit.balloons()
     # streamlit.snow()
+
+# adjust_currency(51781.2 + 464705.2, CurrencyType.CNY)
+# adjust_currency(340916.2 + 717.8, CurrencyType.HKD)
+# adjust_currency(1231.8 + 3270, CurrencyType.USD)

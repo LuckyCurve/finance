@@ -20,6 +20,11 @@ def adjust_currency(currency: float | str, currency_type: CurrencyType):
         )
 
         COMMENT = "平账操作"
+
+        if abs(currency_asset.currency - Decimal(currency)) < 1:
+            print("无需平账")
+            return
+
         if currency_asset.currency > currency:
             sell_currency(
                 currency_asset.currency - Decimal(currency), currency_type, COMMENT
