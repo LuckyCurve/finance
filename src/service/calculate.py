@@ -91,7 +91,7 @@ def calculate_each_day_ticker_total_earn_rate(each_date: date):
         return res
 
 
-def calculate_each_day_ticker_price(each_date: date):
+def calculate_each_day_ticker_price(each_date: date) -> list[tuple[Decimal, str]]:
     with Session(db.engine) as session:
         stock_assets = (
             session.query(StockAsset).filter(StockAsset.date == each_date).all()

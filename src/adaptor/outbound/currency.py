@@ -27,7 +27,3 @@ def get_exchange_rate(time: date) -> tuple[date, dict[str, Decimal]]:
             if currency.upper() in CurrencyType
         },
     )
-
-
-if __name__ == "__main__":
-    print(get_exchange_rate(date.today()))
