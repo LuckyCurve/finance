@@ -24,7 +24,7 @@ def future_wealth_prediction():
     )
     streamlit.write(f"初始资金: {initial_value:.2f} {CurrencyType.USD.value}")
 
-    year = streamlit.slider("投资时间", 0, 10)
+    year = streamlit.slider("投资时间", 0, 50)
     month_contribute = streamlit.slider("每月投资金额", 0, 50000, step=100)
 
     pd = monte_carlo_simulation(initial_value, year, month_contribute)
