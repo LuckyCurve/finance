@@ -2,7 +2,6 @@ import datetime
 from datetime import timedelta
 
 import streamlit
-from streamlit.delta_generator import DeltaGenerator
 from streamlit_echarts import st_echarts
 
 from adaptor.inbound.show_data import (
@@ -22,10 +21,8 @@ from service.calculate import (
 )
 
 
-def draw_left(
-    col: DeltaGenerator, current_account, current_ticker, ticker_daily_price_df
-):
-    col.metric(
+def draw_left(current_account, current_ticker, ticker_daily_price_df):
+    streamlit.metric(
         label=f"我的财富总值 {current_account[3]}",
         value=f"{format_decimal(current_account[0])} {current_account[2].value}",
         delta=f"{format_decimal(current_account[0] - current_account[1])}",
@@ -59,8 +56,7 @@ def draw_left(
             }
         ],
     }
-    with col:
-        st_echarts(options=basic_pie_options, height="400px", theme="dark")
+    st_echarts(options=basic_pie_options, height="400px", theme="dark")
     # data = pandas.DataFrame(
     #     {
     #         "资产类型": ["股市"]
@@ -73,8 +69,8 @@ def draw_left(
     # col.plotly_chart(fig)
 
     account_change_df = calculate_account_change()
-    col.caption("每日总资产变化图")
-    col.line_chart(
+    streamlit.caption("每日总资产变化图")
+    streamlit.line_chart(
         account_change_df,
         x="Date",
         y="Currency",
@@ -82,8 +78,8 @@ def draw_left(
         y_label="总财富",
     )
 
-    col.caption("每日股票份额")
-    col.bar_chart(
+    streamlit.caption("每日股票份额")
+    streamlit.bar_chart(
         ticker_daily_price_df,
         x="Date",
         y="Price",
@@ -93,8 +89,8 @@ def draw_left(
     )
 
 
-def draw_right(col: DeltaGenerator, current_ticker, ticker_daily_price_df):
-    col.metric(
+def draw_right(current_ticker, ticker_daily_price_df):
+    streamlit.metric(
         label=f"我的股市数据 {current_ticker[3]}",
         value=f"{format_decimal(current_ticker[0])} {current_ticker[2].value}",
         delta=f"{format_decimal(current_ticker[0] - current_ticker[1])}",
@@ -134,11 +130,10 @@ def draw_right(col: DeltaGenerator, current_ticker, ticker_daily_price_df):
             }
         ],
     }
-    with col:
-        st_echarts(options=rose_pie_options, height="400px", theme="dark")
+    st_echarts(options=rose_pie_options, height="400px", theme="dark")
 
-    col.caption("个股营收百分比%")
-    col.line_chart(
+    streamlit.caption("个股营收百分比%")
+    streamlit.line_chart(
         calculate_ticker_daily_total_earn_rate(),
         x="Date",
         y="TotalEarnRate",
@@ -147,8 +142,8 @@ def draw_right(col: DeltaGenerator, current_ticker, ticker_daily_price_df):
         y_label="总收益百分比",
     )
 
-    col.caption("每日个股涨跌图")
-    col.line_chart(
+    streamlit.caption("每日个股涨跌图")
+    streamlit.line_chart(
         calculate_ticker_daily_change(),
         x="Date",
         y="Earn",
@@ -184,8 +179,10 @@ def current_finance_summary(current_account, current_ticker, ticker_daily_price_
 
     col1, col2 = streamlit.columns(2)
 
-    draw_left(col1, current_account, current_ticker, ticker_daily_price_df)
-    draw_right(col2, current_ticker, ticker_daily_price_df)
+    with col1:
+        draw_left(current_account, current_ticker, ticker_daily_price_df)
+    with col2:
+        draw_right(current_ticker, ticker_daily_price_df)
 
     draw_details()
 
