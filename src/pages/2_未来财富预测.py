@@ -32,4 +32,10 @@ def future_wealth_prediction():
 
 
 if __name__ == "__main__":
+    streamlit.set_page_config(
+        page_title="未来财富预测",
+        page_icon="💰",
+        layout="wide",
+        initial_sidebar_state="collapsed",  # 关键设置：默认收起侧边栏
+    )
     future_wealth_prediction()

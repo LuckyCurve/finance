@@ -1,11 +1,9 @@
 import datetime
 from datetime import timedelta
 
-import pandas
-import plotly
-import plotly.express
 import streamlit
 from streamlit.delta_generator import DeltaGenerator
+from streamlit_echarts import st_echarts
 
 from adaptor.inbound.show_data import (
     format_decimal,
@@ -35,16 +33,44 @@ def draw_left(
 
     current_currency = get_current_currencies()
 
-    data = pandas.DataFrame(
-        {
-            "资产类型": ["股市"]
-            + [currency_type for currency_type, _ in current_currency],
-            "价格": [current_ticker[0]] + [value for _, value in current_currency],
-        }
-    )
-    fig = plotly.express.pie(data, names="资产类型", values="价格")
-    col.caption("资产分配")
-    col.plotly_chart(fig)
+    data = [{"value": round(float(current_ticker[0]), 2), "name": "股市"}] + [
+        {"value": value, "name": currency_type}
+        for currency_type, value in current_currency
+    ]
+    data = sorted(data, key=lambda x: x["value"], reverse=True)
+
+    basic_pie_options = {
+        "title": {"text": "资产分配", "left": "center"},
+        "tooltip": {"trigger": "item", "formatter": "{b}: {c} ({d}%)"},
+        "legend": {"orient": "vertical", "left": "left"},
+        "series": [
+            {
+                "name": "资产分配",
+                "type": "pie",
+                "radius": "50%",
+                "data": data,
+                "emphasis": {
+                    "itemStyle": {
+                        "shadowBlur": 10,
+                        "shadowOffsetX": 0,
+                        "shadowColor": "rgba(0, 0, 0, 0.5)",
+                    }
+                },
+            }
+        ],
+    }
+    with col:
+        st_echarts(options=basic_pie_options, height="400px", theme="dark")
+    # data = pandas.DataFrame(
+    #     {
+    #         "资产类型": ["股市"]
+    #         + [currency_type for currency_type, _ in current_currency],
+    #         "价格": [current_ticker[0]] + [value for _, value in current_currency],
+    #     }
+    # )
+    # fig = plotly.express.pie(data, names="资产类型", values="价格")
+    # col.caption("资产分配")
+    # col.plotly_chart(fig)
 
     account_change_df = calculate_account_change()
     col.caption("每日总资产变化图")
@@ -78,9 +104,38 @@ def draw_right(col: DeltaGenerator, current_ticker, ticker_daily_price_df):
         ticker_daily_price_df["Date"].dt.date == datetime.date.today() - timedelta(1)
     ]
     data = data[["Price", "Ticker"]]
-    fig = plotly.express.pie(data, names="Ticker", values="Price")
-    col.caption("持有股票份额")
-    col.plotly_chart(fig)
+
+    data = (
+        data.sort_values(by="Price", ascending=False)  # 👈 排序
+        .rename(columns={"Price": "value", "Ticker": "name"})[["value", "name"]]
+        .to_dict(orient="records")
+    )
+
+    rose_pie_options = {
+        "title": {"text": "持有股票份额", "left": "center"},
+        "tooltip": {"trigger": "item", "formatter": "{b}: {c} ({d}%)"},
+        "legend": {"top": "7%", "left": "center"},
+        "series": [
+            {
+                "name": "市场份额",
+                "type": "pie",
+                "radius": ["30%", "60%"],  # 内径和外径
+                "avoidLabelOverlap": False,
+                "data": data,
+                "emphasis": {
+                    "itemStyle": {
+                        "shadowBlur": 10,
+                        "shadowOffsetX": 0,
+                        "shadowColor": "rgba(0, 0, 0, 0.5)",
+                    }
+                },
+                "labelLine": {"show": False},
+                "label": {"show": False, "position": "center"},
+            }
+        ],
+    }
+    with col:
+        st_echarts(options=rose_pie_options, height="400px", theme="dark")
 
     col.caption("个股营收百分比%")
     col.line_chart(
@@ -136,6 +191,12 @@ def current_finance_summary(current_account, current_ticker, ticker_daily_price_
 
 
 if __name__ == "__main__":
+    streamlit.set_page_config(
+        page_title="当前财富看板",
+        page_icon="💰",
+        layout="wide",
+        initial_sidebar_state="collapsed",  # 关键设置：默认收起侧边栏
+    )
     current_account = get_current_account()
     current_ticker = get_current_ticker()
     ticker_daily_price_df = calculate_ticker_daily_price()
