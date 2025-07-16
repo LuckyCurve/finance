@@ -126,7 +126,7 @@ wheels = [
 
 [[package]]
 name = "akshare"
-version = "1.17.21"
+version = "1.17.23"
 source = { registry = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -147,9 +147,9 @@ dependencies = [
     { name = "urllib3" },
     { name = "xlrd" },
 ]
-sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/8e/4f/d3b3248b51d06c280c1e81100c647a188503cf197d6a56af5072d343ecdb/akshare-1.17.21.tar.gz", hash = "sha256:fca5668320ea67787ff62d8152306bc085ab3fd6c7621ee2ec89df780d3fc67e", size = 839866 }
+sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/6f/10/c8ca5e7174cdf9063a68c78207da38981ccdb29789f634207c03c7824626/akshare-1.17.23.tar.gz", hash = "sha256:e109f3cc8923d614370d5748d961648413fd299fa0db007fc12da679ff89a0a3", size = 839849 }
 wheels = [
-    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/27/ab/a5575bc2044976527d7b9f65f62edf25324118c08b6b7613f1dab28323a6/akshare-1.17.21-py3-none-any.whl", hash = "sha256:472e38f7dd15c93f9eb85bbe08ae9ed0eff893dd01cf33df1272cf1cf5ba4d32", size = 1054053 },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/57/a3/f7ad74ad8862d00f48d30377226f1afb2af55e894c30d3d914646e7bae7b/akshare-1.17.23-py3-none-any.whl", hash = "sha256:b25734b4057543ee78de186b7caaa2f473066b85cd2bdcad9c6faff56822f3b5", size = 1054070 },
 ]
 
 [[package]]
