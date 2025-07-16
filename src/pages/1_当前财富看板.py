@@ -2,7 +2,10 @@ import datetime
 from datetime import timedelta
 
 import streamlit
-from streamlit_echarts import st_echarts
+import streamlit.components.v1 as components
+from pyecharts import options as opts
+from pyecharts.charts import Pie
+from pyecharts.globals import ThemeType
 
 from adaptor.inbound.show_data import (
     format_decimal,
@@ -30,43 +33,30 @@ def draw_left(current_account, current_ticker, ticker_daily_price_df):
 
     current_currency = get_current_currencies()
 
-    data = [{"value": round(float(current_ticker[0]), 2), "name": "股市"}] + [
-        {"value": value, "name": currency_type}
-        for currency_type, value in current_currency
-    ]
-    data = sorted(data, key=lambda x: x["value"], reverse=True)
+    data = [
+        [
+            "股市",
+            round(float(current_ticker[0]), 2),
+        ]
+    ] + [[currency_type, value] for currency_type, value in current_currency]
+    data = sorted(data, key=lambda x: x[1], reverse=True)
 
-    basic_pie_options = {
-        "title": {"text": "资产分配", "left": "center"},
-        "tooltip": {"trigger": "item", "formatter": "{b}: {c} ({d}%)"},
-        "legend": {"orient": "vertical", "left": "left"},
-        "series": [
-            {
-                "name": "资产分配",
-                "type": "pie",
-                "radius": "50%",
-                "data": data,
-                "emphasis": {
-                    "itemStyle": {
-                        "shadowBlur": 10,
-                        "shadowOffsetX": 0,
-                        "shadowColor": "rgba(0, 0, 0, 0.5)",
-                    }
-                },
-            }
-        ],
-    }
-    st_echarts(options=basic_pie_options, height="400px", theme="dark")
-    # data = pandas.DataFrame(
-    #     {
-    #         "资产类型": ["股市"]
-    #         + [currency_type for currency_type, _ in current_currency],
-    #         "价格": [current_ticker[0]] + [value for _, value in current_currency],
-    #     }
-    # )
-    # fig = plotly.express.pie(data, names="资产类型", values="价格")
-    # col.caption("资产分配")
-    # col.plotly_chart(fig)
+    html = (
+        Pie(init_opts=opts.InitOpts(theme=ThemeType.DARK))
+        .add(
+            series_name="资产分配",
+            data_pair=data,
+            radius="50%",
+        )
+        .set_global_opts(
+            title_opts=opts.TitleOpts(
+                title="总的资产分配",
+            ),
+            tooltip_opts=opts.TooltipOpts(formatter="{b}: {c} ({d}%)"),
+        )
+        .render_embed()
+    )
+    components.html(html, height=500)
 
     account_change_df = calculate_account_change()
     streamlit.caption("每日总资产变化图")
@@ -99,38 +89,24 @@ def draw_right(current_ticker, ticker_daily_price_df):
     data = ticker_daily_price_df[
         ticker_daily_price_df["Date"].dt.date == datetime.date.today() - timedelta(1)
     ]
-    data = data[["Price", "Ticker"]]
+    pie_data = [
+        (row["Ticker"], row["Price"])
+        for _, row in data[["Price", "Ticker"]]
+        .sort_values(by="Price", ascending=False)
+        .iterrows()
+    ]
 
-    data = (
-        data.sort_values(by="Price", ascending=False)  # 👈 排序
-        .rename(columns={"Price": "value", "Ticker": "name"})[["value", "name"]]
-        .to_dict(orient="records")
+    html = (
+        Pie(init_opts=opts.InitOpts(theme=ThemeType.DARK))
+        .add("市场份额", pie_data, radius=["30%", "60%"])
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="持有股票份额"),
+            tooltip_opts=opts.TooltipOpts(formatter="{b}: {c} ({d}%)"),
+        )
+        .render_embed()
     )
 
-    rose_pie_options = {
-        "title": {"text": "持有股票份额", "left": "center"},
-        "tooltip": {"trigger": "item", "formatter": "{b}: {c} ({d}%)"},
-        "legend": {"top": "7%", "left": "center"},
-        "series": [
-            {
-                "name": "市场份额",
-                "type": "pie",
-                "radius": ["30%", "60%"],  # 内径和外径
-                "avoidLabelOverlap": False,
-                "data": data,
-                "emphasis": {
-                    "itemStyle": {
-                        "shadowBlur": 10,
-                        "shadowOffsetX": 0,
-                        "shadowColor": "rgba(0, 0, 0, 0.5)",
-                    }
-                },
-                "labelLine": {"show": False},
-                "label": {"show": False, "position": "center"},
-            }
-        ],
-    }
-    st_echarts(options=rose_pie_options, height="400px", theme="dark")
+    components.html(html, height=500)
 
     streamlit.caption("个股营收百分比%")
     streamlit.line_chart(

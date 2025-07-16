@@ -424,10 +424,10 @@ dependencies = [
     { name = "curl-cffi" },
     { name = "numerize" },
     { name = "numpy" },
+    { name = "pyecharts" },
     { name = "pytest" },
     { name = "sqlalchemy" },
     { name = "streamlit" },
-    { name = "streamlit-echarts" },
 ]
 
 [package.metadata]
@@ -436,10 +436,10 @@ requires-dist = [
     { name = "curl-cffi", specifier = ">=0.11.3" },
     { name = "numerize", specifier = ">=0.12" },
     { name = "numpy", specifier = "~=2.2.6" },
+    { name = "pyecharts", specifier = ">=2.0.8" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "sqlalchemy", specifier = ">=2.0.41" },
     { name = "streamlit", specifier = ">=1.45.1" },
-    { name = "streamlit-echarts", specifier = ">=0.4.0" },
 ]
 
 [[package]]
@@ -1774,20 +1774,6 @@ dependencies = [
 sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/bd/7e/c7499c447b7021657fa5c851091072c1c7a26f1dda0369c21c0243fc35e7/streamlit-1.46.1.tar.gz", hash = "sha256:2cc4ad01cfeded9ad953a21829eb879b90aa77af4068c68397411c2d5c8862cf", size = 9651018 }
 wheels = [
     { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/84/3b/35400175788cdd6a43c90dce1e7f567eb6843a3ba0612508c0f19ee31f5f/streamlit-1.46.1-py3-none-any.whl", hash = "sha256:dffa373230965f87ccc156abaff848d7d731920cf14106f3b99b1ea18076f728", size = 10051346 },
-]
-
-[[package]]
-name = "streamlit-echarts"
-version = "0.4.0"
-source = { registry = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple" }
-dependencies = [
-    { name = "pyecharts" },
-    { name = "simplejson" },
-    { name = "streamlit" },
-]
-sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/c1/04/f3fe3e05e4549d1462e6f93de531b97d4a4a72b447a7e162dbcc4e9b225e/streamlit-echarts-0.4.0.tar.gz", hash = "sha256:33cc5329b99ddce8b64ce6c4607733e02db575c379af6394a8c78ae5df14934d", size = 3050749 }
-wheels = [
-    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/bd/a8/c2bff6ff03820aa722fb2f33b785f22707c85b40920fc7dbf2b1c6efffd2/streamlit_echarts-0.4.0-py3-none-any.whl", hash = "sha256:aa86679da0e7680ee43b7a6def31439273a686a8d71de522c55655047e80ec9b", size = 3076086 },
 ]
 
 [[package]]
