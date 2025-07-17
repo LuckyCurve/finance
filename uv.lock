@@ -126,7 +126,7 @@ wheels = [
 
 [[package]]
 name = "akshare"
-version = "1.17.23"
+version = "1.17.24"
 source = { registry = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -147,9 +147,9 @@ dependencies = [
     { name = "urllib3" },
     { name = "xlrd" },
 ]
-sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/6f/10/c8ca5e7174cdf9063a68c78207da38981ccdb29789f634207c03c7824626/akshare-1.17.23.tar.gz", hash = "sha256:e109f3cc8923d614370d5748d961648413fd299fa0db007fc12da679ff89a0a3", size = 839849 }
+sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/5c/67/f78cc3a8f1656d8999dd9f152d5631bab0836909799757a129b1c1f90d58/akshare-1.17.24.tar.gz", hash = "sha256:8d3103b7ec7febf3ef71deba589d2cefea89ca43a21286b5afbb57db20abc291", size = 839794 }
 wheels = [
-    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/57/a3/f7ad74ad8862d00f48d30377226f1afb2af55e894c30d3d914646e7bae7b/akshare-1.17.23-py3-none-any.whl", hash = "sha256:b25734b4057543ee78de186b7caaa2f473066b85cd2bdcad9c6faff56822f3b5", size = 1054070 },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/99/20/5349eed9f17f7d655b7af0eb29a829257664d80fd9a9ce837405932f43fe/akshare-1.17.24-py3-none-any.whl", hash = "sha256:c5e22f45f51a03428c904db4d437e2efcf09a3905ce4446d0299327ccb800a8c", size = 1054071 },
 ]
 
 [[package]]
@@ -1749,7 +1749,7 @@ wheels = [
 
 [[package]]
 name = "streamlit"
-version = "1.46.1"
+version = "1.47.0"
 source = { registry = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple" }
 dependencies = [
     { name = "altair" },
@@ -1771,9 +1771,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "watchdog", marker = "sys_platform != 'darwin'" },
 ]
-sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/bd/7e/c7499c447b7021657fa5c851091072c1c7a26f1dda0369c21c0243fc35e7/streamlit-1.46.1.tar.gz", hash = "sha256:2cc4ad01cfeded9ad953a21829eb879b90aa77af4068c68397411c2d5c8862cf", size = 9651018 }
+sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/e9/10/46e1e71fd52d7137402f5b2abee20c57d315dd9f8a88e123f03c36ad6260/streamlit-1.47.0.tar.gz", hash = "sha256:b4ff3b8fa01de1e1dc572930b420897f0870ed2ae44e23a815999b62c0778c30", size = 9540444 }
 wheels = [
-    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/84/3b/35400175788cdd6a43c90dce1e7f567eb6843a3ba0612508c0f19ee31f5f/streamlit-1.46.1-py3-none-any.whl", hash = "sha256:dffa373230965f87ccc156abaff848d7d731920cf14106f3b99b1ea18076f728", size = 10051346 },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/62/b1/44bd5f0eb1a6d9fa045db1e8bca77dc6751c12f7dacebf820ee708ea5acc/streamlit-1.47.0-py3-none-any.whl", hash = "sha256:c10dbfdf832c3fb8e5b62c7a5d1eaaae460dcf332a3a1623f7a072a6303100ee", size = 9944331 },
 ]
 
 [[package]]
