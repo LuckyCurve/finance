@@ -38,7 +38,7 @@ def method2_pyecharts_html():
     st.subheader("柱状图示例")
 
     bar_chart = (
-        Bar()
+        Bar(init_opts=opts.InitOpts(theme=ThemeType.DARK))
         .add_xaxis(["1月", "2月", "3月", "4月", "5月", "6月"])
         .add_yaxis("销售额", [5, 20, 36, 10, 10, 20])
         .set_global_opts(title_opts=opts.TitleOpts(title="月度销售额"))
@@ -51,7 +51,7 @@ def method2_pyecharts_html():
     st.subheader("折线图示例")
 
     line_chart = (
-        Line()
+        Line(init_opts=opts.InitOpts(theme=ThemeType.DARK))
         .add_xaxis(["1月", "2月", "3月", "4月", "5月", "6月"])
         .add_yaxis("销售额", [5, 20, 36, 10, 10, 20])
         .add_yaxis("利润", [3, 15, 25, 8, 8, 15])
