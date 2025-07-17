@@ -5,10 +5,8 @@ import streamlit
 import streamlit.components.v1 as components
 from pyecharts import options as opts
 from pyecharts.charts import Pie
-from pyecharts.globals import ThemeType
 from pyecharts.commons.utils import JsCode
-
-PIE_TOOLTIP_FORMATTER = JsCode("function (params) { return params.marker + '<b>' + params.name + '</b> ' + params.value.toFixed(2) + ' (' + params.percent.toFixed(2) + '%)'; }")
+from pyecharts.globals import ThemeType
 
 from adaptor.inbound.show_data import (
     format_decimal,
@@ -24,6 +22,10 @@ from service.calculate import (
     calculate_ticker_daily_change,
     calculate_ticker_daily_price,
     calculate_ticker_daily_total_earn_rate,
+)
+
+PIE_TOOLTIP_FORMATTER = JsCode(
+    "function (params) { return params.marker + '<b>' + params.name + '</b> ' + params.value.toFixed(2) + ' (' + params.percent.toFixed(2) + '%)'; }"
 )
 
 
@@ -55,9 +57,7 @@ def draw_left(current_account, current_ticker, ticker_daily_price_df):
             title_opts=opts.TitleOpts(
                 title="总的资产分配",
             ),
-            tooltip_opts=opts.TooltipOpts(
-                formatter=PIE_TOOLTIP_FORMATTER
-            ),
+            tooltip_opts=opts.TooltipOpts(formatter=PIE_TOOLTIP_FORMATTER),
         )
         .render_embed()
     )
@@ -106,9 +106,7 @@ def draw_right(current_ticker, ticker_daily_price_df):
         .add("市场份额", pie_data, radius=["30%", "60%"])
         .set_global_opts(
             title_opts=opts.TitleOpts(title="持有股票份额"),
-            tooltip_opts=opts.TooltipOpts(
-                formatter=PIE_TOOLTIP_FORMATTER
-            ),
+            tooltip_opts=opts.TooltipOpts(formatter=PIE_TOOLTIP_FORMATTER),
         )
         .render_embed()
     )
