@@ -9,7 +9,7 @@ from service.calculate import (
 from service.simulate import monte_carlo_simulation
 
 
-def future_wealth_prediction():
+def future_wealth_prediction() -> None:
     streamlit.title(":rainbow[未来财富预测]")
     ticker_data = calculate_each_day_ticker_price(date.today() - timedelta(1))
 

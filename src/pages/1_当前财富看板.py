@@ -1,6 +1,8 @@
 import datetime
 from datetime import timedelta
+from typing import Tuple
 
+import pandas as pd
 import streamlit
 import streamlit.components.v1 as components
 from pyecharts import options as opts
@@ -29,7 +31,9 @@ PIE_TOOLTIP_FORMATTER = JsCode(
 )
 
 
-def draw_left(current_account, current_ticker, ticker_daily_price_df):
+def draw_left(
+    current_account: Tuple, current_ticker: Tuple, ticker_daily_price_df: pd.DataFrame
+) -> None:
     streamlit.metric(
         label=f"我的财富总值 {current_account[3]}",
         value=f"{format_decimal(current_account[0])} {current_account[2].value}",
@@ -84,7 +88,7 @@ def draw_left(current_account, current_ticker, ticker_daily_price_df):
     )
 
 
-def draw_right(current_ticker, ticker_daily_price_df):
+def draw_right(current_ticker: Tuple, ticker_daily_price_df: pd.DataFrame) -> None:
     streamlit.metric(
         label=f"我的股市数据 {current_ticker[3]}",
         value=f"{format_decimal(current_ticker[0])} {current_ticker[2].value}",
@@ -134,7 +138,7 @@ def draw_right(current_ticker, ticker_daily_price_df):
     )
 
 
-def draw_details():
+def draw_details() -> None:
     streamlit.caption("汇率波动")
     exchange_rate = get_exchange_rate_details()
     streamlit.line_chart(
@@ -155,7 +159,9 @@ def draw_details():
     streamlit.table(currency_details)
 
 
-def current_finance_summary(current_account, current_ticker, ticker_daily_price_df):
+def current_finance_summary(
+    current_account: Tuple, current_ticker: Tuple, ticker_daily_price_df: pd.DataFrame
+) -> None:
     streamlit.title(":rainbow[我的财富看板]")
 
     col1, col2 = streamlit.columns(2)

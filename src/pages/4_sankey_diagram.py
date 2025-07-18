@@ -4,7 +4,7 @@ from pyecharts.charts import Sankey
 from pyecharts import options as opts
 from pyecharts.globals import ThemeType
 
-def draw_sankey_chart():
+def draw_sankey_chart() -> None:
     st.title("桑葚图示例 (Sankey Diagram)")
 
     # 示例数据：节点和链接
@@ -38,7 +38,7 @@ def draw_sankey_chart():
             nodes,
             links,
             pos_left="10%",  # 图表左边距
-            pos_right="10%", # 图表右边距
+            pos_right="10%", # ��表右边距
             pos_top="20%",   # 图表上边距
             pos_bottom="20%",# 图表下边距
             # 设置节点标签的格式
@@ -106,7 +106,7 @@ def draw_sankey_chart():
             linestyle_opt=opts.LineStyleOpts(curve=0.5, opacity=0.6, color="source"),
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(title="能源流向分析 - 示例2"),
+            title_opts=opts.TitleOpts(title="能��流向分析 - 示例2"),
             tooltip_opts=opts.TooltipOpts(
                 trigger="item",
                 trigger_on="mousemove",
@@ -170,7 +170,7 @@ def draw_sankey_chart():
     ]
 
     links4 = [
-        {"source": "供应商A", "target": "工厂1", "value": 50},
+        {"source": "供应商A", "target": "���厂1", "value": 50},
         {"source": "供应商A", "target": "工厂2", "value": 30},
         {"source": "供应商B", "target": "工厂1", "value": 40},
         {"source": "供应商B", "target": "工厂2", "value": 60},

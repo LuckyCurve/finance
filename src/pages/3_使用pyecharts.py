@@ -6,7 +6,7 @@ from pyecharts.charts import Bar, Line, Pie
 from pyecharts.globals import ThemeType
 
 
-def method2_pyecharts_html():
+def method2_pyecharts_html() -> None:
     st.title("方法二：使用 pyecharts 生成 HTML")
 
     # 创建饼图

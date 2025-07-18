@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 
 from sqlalchemy import TEXT, DateTime, TypeDecorator, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -8,7 +9,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 class DecimalAsString(TypeDecorator):
     impl = TEXT()  # 底层数据库类型
 
-    def process_bind_param(self, value, dialect):
+    def process_bind_param(self, value: Any, dialect: Any) -> str | None:
         if value is None:
             return None
         if not isinstance(value, Decimal):
@@ -16,7 +17,7 @@ class DecimalAsString(TypeDecorator):
         # 转成字符串存储
         return str(value)
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value: Any, dialect: Any) -> Decimal | None:
         if value is None:
             return None
         # 读取时转回Decimal

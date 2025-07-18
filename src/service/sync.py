@@ -44,7 +44,7 @@ LAST_SYNC_DATE = "last_sync_date"
 DATE_FORMAT = "%Y-%m-%d"
 
 
-def sync():
+def sync() -> None:
     with Session(db.engine) as session:
         sync_config = session.query(Config).filter(Config.key == LAST_SYNC_DATE).first()
         if sync_config is not None:
@@ -70,7 +70,7 @@ def sync():
 
 
 @timing_decorator
-def sync_account():
+def sync_account() -> None:
     with Session(db.engine) as session:
         session.query(Account).delete()
         assets = session.query(Asset).order_by(asc(Asset.date)).first()
@@ -113,7 +113,7 @@ def sync_account():
 
 def _calculate_currency_each_daily_account(
     each_date: date, session: Session, exchange_rates_map: Dict[CurrencyType, Decimal]
-):
+) -> Decimal:
     currency_assets = (
         session.query(CurrencyAsset).filter(CurrencyAsset.date == each_date).all()
     )
@@ -130,7 +130,7 @@ def _calculate_currency_each_daily_account(
 
 def _calculate_stock_each_daily_account(
     each_date: date, session: Session, exchange_rates_map: Dict[CurrencyType, Decimal]
-):
+) -> Decimal:
     stock_assets = session.query(StockAsset).filter(StockAsset.date == each_date).all()
     res = Decimal(0)
 
@@ -146,7 +146,7 @@ def _calculate_stock_each_daily_account(
 
 
 @timing_decorator
-def sync_asset():
+def sync_asset() -> None:
     with Session(engine) as session:
         session.query(Asset).delete()
 
@@ -159,7 +159,7 @@ def sync_asset():
         session.commit()
 
 
-def _sync_currency_asset(session):
+def _sync_currency_asset(session: Session) -> None:
     currency_transactions = (
         session.query(CurrencyTransaction).order_by(asc(CurrencyTransaction.date)).all()
     )
@@ -206,7 +206,7 @@ def _sync_currency_asset(session):
     session.add_all(all_assets)
 
 
-def _sync_stock_asset(session):
+def _sync_stock_asset(session: Session) -> None:
     stock_transactions = (
         session.query(StockTransaction).order_by(asc(StockTransaction.date)).all()
     )
@@ -337,7 +337,7 @@ def sync_exchange_rate() -> None:
 
 
 @timing_decorator
-def sync_ticker_info():
+def sync_ticker_info() -> None:
     sync_hk_ticker_symbol()
     sync_us_ticker_symbol()
 
@@ -409,7 +409,7 @@ def search_ticker_symbol(symbol: str) -> TickerSymbol:
         )
 
 
-def sync_us_ticker_symbol():
+def sync_us_ticker_symbol() -> None:
     with Session(db.engine) as session:
         count = (
             session.query(TickerSymbol)
@@ -430,7 +430,7 @@ def sync_us_ticker_symbol():
         session.commit()
 
 
-def sync_hk_ticker_symbol():
+def sync_hk_ticker_symbol() -> None:
     with Session(db.engine) as session:
         count = (
             session.query(TickerSymbol)

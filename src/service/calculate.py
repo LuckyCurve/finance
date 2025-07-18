@@ -1,7 +1,9 @@
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import List, Tuple
 
 import pandas as pd
+from pandas import DataFrame
 from sqlalchemy import asc
 from sqlalchemy.orm import Session
 
@@ -10,7 +12,7 @@ from db.entity import Account, CurrencyType, ExchangedRate, StockAsset
 from service.ticker import get_ticker_close_price
 
 
-def calculate_account_change():
+def calculate_account_change() -> DataFrame:
     with Session(db.engine) as session:
         res = []
 
@@ -21,7 +23,7 @@ def calculate_account_change():
         return df
 
 
-def calculate_ticker_daily_change():
+def calculate_ticker_daily_change() -> DataFrame:
     with Session(db.engine) as session:
         res = []
 
@@ -37,7 +39,7 @@ def calculate_ticker_daily_change():
         return df
 
 
-def calculate_ticker_daily_price():
+def calculate_ticker_daily_price() -> DataFrame:
     with Session(db.engine) as session:
         res = []
 
@@ -53,7 +55,7 @@ def calculate_ticker_daily_price():
         return df
 
 
-def calculate_ticker_daily_total_earn_rate():
+def calculate_ticker_daily_total_earn_rate() -> DataFrame:
     with Session(db.engine) as session:
         res = []
 
@@ -71,7 +73,9 @@ def calculate_ticker_daily_total_earn_rate():
         return df
 
 
-def calculate_each_day_ticker_total_earn_rate(each_date: date):
+def calculate_each_day_ticker_total_earn_rate(
+    each_date: date,
+) -> List[Tuple[Decimal, str]]:
     with Session(db.engine) as session:
         stock_assets = (
             session.query(StockAsset).filter(StockAsset.date == each_date).all()
@@ -91,7 +95,7 @@ def calculate_each_day_ticker_total_earn_rate(each_date: date):
         return res
 
 
-def calculate_each_day_ticker_price(each_date: date) -> list[tuple[Decimal, str]]:
+def calculate_each_day_ticker_price(each_date: date) -> List[Tuple[Decimal, str]]:
     with Session(db.engine) as session:
         stock_assets = (
             session.query(StockAsset).filter(StockAsset.date == each_date).all()
@@ -121,7 +125,7 @@ def calculate_each_day_ticker_price(each_date: date) -> list[tuple[Decimal, str]
         return res
 
 
-def calculate_each_day_ticker_change(each_date: date):
+def calculate_each_day_ticker_change(each_date: date) -> List[Tuple[Decimal, str]]:
     with Session(db.engine) as session:
         stock_assets = (
             session.query(StockAsset).filter(StockAsset.date == each_date).all()

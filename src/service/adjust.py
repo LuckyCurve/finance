@@ -8,7 +8,7 @@ from db.entity import CurrencyAsset, CurrencyType
 from service.transaction import buy_currency, sell_currency
 
 
-def adjust_currency(currency: float | str, currency_type: CurrencyType):
+def adjust_currency(currency: float | str, currency_type: CurrencyType) -> None:
     """进行现金金额调整,完成平账操作"""
     with Session(db.engine) as session:
         currency_asset = (
