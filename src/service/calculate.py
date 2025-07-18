@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
+import streamlit
 from typing import List, Tuple
 
 import pandas as pd
@@ -12,6 +13,7 @@ from db.entity import Account, CurrencyType, ExchangedRate, StockAsset
 from service.ticker import get_ticker_close_price
 
 
+@streamlit.cache_data
 def calculate_account_change() -> DataFrame:
     with Session(db.engine) as session:
         res = []
@@ -23,6 +25,7 @@ def calculate_account_change() -> DataFrame:
         return df
 
 
+@streamlit.cache_data
 def calculate_ticker_daily_change() -> DataFrame:
     with Session(db.engine) as session:
         res = []
@@ -39,6 +42,7 @@ def calculate_ticker_daily_change() -> DataFrame:
         return df
 
 
+@streamlit.cache_data
 def calculate_ticker_daily_price() -> DataFrame:
     with Session(db.engine) as session:
         res = []
@@ -55,6 +59,7 @@ def calculate_ticker_daily_price() -> DataFrame:
         return df
 
 
+@streamlit.cache_data
 def calculate_ticker_daily_total_earn_rate() -> DataFrame:
     with Session(db.engine) as session:
         res = []
@@ -73,6 +78,7 @@ def calculate_ticker_daily_total_earn_rate() -> DataFrame:
         return df
 
 
+@streamlit.cache_data
 def calculate_each_day_ticker_total_earn_rate(
     each_date: date,
 ) -> List[Tuple[Decimal, str]]:
@@ -95,6 +101,7 @@ def calculate_each_day_ticker_total_earn_rate(
         return res
 
 
+@streamlit.cache_data
 def calculate_each_day_ticker_price(each_date: date) -> List[Tuple[Decimal, str]]:
     with Session(db.engine) as session:
         stock_assets = (
@@ -125,6 +132,7 @@ def calculate_each_day_ticker_price(each_date: date) -> List[Tuple[Decimal, str]
         return res
 
 
+@streamlit.cache_data
 def calculate_each_day_ticker_change(each_date: date) -> List[Tuple[Decimal, str]]:
     with Session(db.engine) as session:
         stock_assets = (

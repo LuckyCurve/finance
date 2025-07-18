@@ -177,13 +177,12 @@ def draw_right(
     )
 
 
-def draw_details() -> None:
+def draw_details(exchange_rate: pd.DataFrame) -> None:
     """
     Draws the detailed sections of the finance dashboard, including exchange rate fluctuations,
     stock transaction details, and cash transaction details.
     """
     streamlit.caption("汇率波动")
-    exchange_rate = get_exchange_rate_details()
     streamlit.line_chart(
         exchange_rate,
         x="日期",
@@ -320,14 +319,14 @@ def current_finance_summary() -> None:
     streamlit.title(":rainbow[我的财富看板]")
 
     current_account, current_ticker, ticker_daily_price_df = _get_initial_data()
-    exchange_rates_df = get_exchange_rate_details()
+    exchange_rates = get_exchange_rate_details()
 
     (
         converted_account,
         converted_ticker,
         selected_currency_symbol,
     ) = _handle_currency_selection_and_conversion(
-        current_account, current_ticker, exchange_rates_df
+        current_account, current_ticker, exchange_rates
     )
 
     col1, col2 = streamlit.columns(2)
@@ -346,7 +345,7 @@ def current_finance_summary() -> None:
             selected_currency_symbol,
         )
 
-    draw_details()
+    draw_details(exchange_rates)
 
 
 if __name__ == "__main__":

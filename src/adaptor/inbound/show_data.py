@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import List, Literal
 
+import streamlit
 import pandas as pd
 from numerize.numerize import numerize
 from sqlalchemy import desc
@@ -30,6 +31,7 @@ def format_decimal(data) -> str:
     return numerize(round(float(data), 2))
 
 
+@streamlit.cache_data
 def get_current_account() -> tuple[Decimal, Decimal, CurrencyType, date]:
     """获取相应的财富总值
 
@@ -45,6 +47,7 @@ def get_current_account() -> tuple[Decimal, Decimal, CurrencyType, date]:
         return (today.currency, yesterday.currency, today.currency_type, today.date)
 
 
+@streamlit.cache_data
 def get_current_ticker() -> tuple[Decimal, Decimal, Literal[CurrencyType.USD], date]:
     """获取财富部分中股票总值
 
@@ -64,6 +67,7 @@ def get_current_ticker() -> tuple[Decimal, Decimal, Literal[CurrencyType.USD], d
     return (current_date_value, yesterday_value, CurrencyType.USD, current_date)
 
 
+@streamlit.cache_data
 def get_current_currencies() -> List:
     """获取最新的所有货币类型财产的值
 
@@ -96,6 +100,7 @@ def get_current_currencies() -> List:
         return res
 
 
+@streamlit.cache_data
 def get_ticker_transaction_details():
     with Session(db.engine) as session:
         res = [
@@ -126,6 +131,7 @@ def get_ticker_transaction_details():
         return df
 
 
+@streamlit.cache_data
 def get_currency_transaction_details():
     with Session(db.engine) as session:
         res = [
@@ -156,6 +162,7 @@ def get_currency_transaction_details():
         return df
 
 
+@streamlit.cache_data
 def get_exchange_rate_details():
     with Session(db.engine) as session:
         res = [
