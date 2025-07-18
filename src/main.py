@@ -25,6 +25,11 @@ if __name__ == "__main__":
         icon="💳",
     )
     streamlit.page_link("pages/2_未来财富预测.py", label="未来财富预测", icon="🛠️")
+    streamlit.page_link(
+        "pages/3_股票买入和现金平账.py",
+        label="股票买入和现金平账",
+        icon="✍️",
+    )
 
 
 # adjust_currency(51781.2 + 464705.2, CurrencyType.CNY)
