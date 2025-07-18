@@ -1,3 +1,9 @@
+"""
+This Streamlit application provides a comprehensive financial dashboard,
+displaying current wealth, stock data, asset allocation, and transaction details.
+It includes functionality to switch between different currency views for wealth and stock metrics.
+"""
+
 import datetime
 from datetime import timedelta
 from typing import Tuple
@@ -5,12 +11,16 @@ from typing import Tuple
 import pandas as pd
 import streamlit
 import streamlit.components.v1 as components
+
+# Pyecharts imports
 from pyecharts import options as opts
 from pyecharts.charts import Pie
 from pyecharts.commons.utils import JsCode
 from pyecharts.globals import ThemeType
 
+# Local application imports
 from adaptor.inbound.show_data import (
+    CurrencyType,
     format_decimal,
     get_currency_transaction_details,
     get_current_account,
@@ -32,11 +42,26 @@ PIE_TOOLTIP_FORMATTER = JsCode(
 
 
 def draw_left(
-    current_account: Tuple, current_ticker: Tuple, ticker_daily_price_df: pd.DataFrame
+    current_account: Tuple,
+    original_current_ticker: Tuple,
+    ticker_daily_price_df: pd.DataFrame,
+    selected_currency_symbol: str,
 ) -> None:
+    """
+    Draws the left column of the finance dashboard, including total wealth metric,
+    asset allocation pie chart, daily total asset change chart, and daily stock share chart.
+
+    Args:
+        current_account (Tuple): Tuple containing current account details (value, yesterday's value, currency type, date).
+        original_current_ticker (Tuple): Tuple containing original ticker details (value, yesterday's value, currency type, date)
+                                         used for the asset allocation pie chart to keep it in USD.
+        ticker_daily_price_df (pd.DataFrame): DataFrame with daily ticker prices.
+        selected_currency_type (CurrencyType): The currency type selected by the user for display.
+        selected_currency_symbol (str): The symbol of the selected currency.
+    """
     streamlit.metric(
         label=f"我的财富总值 {current_account[3]}",
-        value=f"{format_decimal(current_account[0])} {current_account[2].value}",
+        value=f"{format_decimal(current_account[0])} {selected_currency_symbol}",
         delta=f"{format_decimal(current_account[0] - current_account[1])}",
     )
 
@@ -45,7 +70,7 @@ def draw_left(
     data = [
         [
             "股市",
-            round(float(current_ticker[0]), 2),
+            round(float(original_current_ticker[0]), 2),
         ]
     ] + [[currency_type, value] for currency_type, value in current_currency]
     data = sorted(data, key=lambda x: x[1], reverse=True)
@@ -88,10 +113,24 @@ def draw_left(
     )
 
 
-def draw_right(current_ticker: Tuple, ticker_daily_price_df: pd.DataFrame) -> None:
+def draw_right(
+    current_ticker: Tuple,
+    ticker_daily_price_df: pd.DataFrame,
+    selected_currency_symbol: str,
+) -> None:
+    """
+    Draws the right column of the finance dashboard, including stock data metric,
+    held stock share pie chart, individual stock revenue percentage chart, and daily stock change chart.
+
+    Args:
+        current_ticker (Tuple): Tuple containing current ticker details (value, yesterday's value, currency type, date).
+        ticker_daily_price_df (pd.DataFrame): DataFrame with daily ticker prices.
+        selected_currency_type (CurrencyType): The currency type selected by the user for display.
+        selected_currency_symbol (str): The symbol of the selected currency.
+    """
     streamlit.metric(
         label=f"我的股市数据 {current_ticker[3]}",
-        value=f"{format_decimal(current_ticker[0])} {current_ticker[2].value}",
+        value=f"{format_decimal(current_ticker[0])} {selected_currency_symbol}",
         delta=f"{format_decimal(current_ticker[0] - current_ticker[1])}",
     )
 
@@ -139,6 +178,10 @@ def draw_right(current_ticker: Tuple, ticker_daily_price_df: pd.DataFrame) -> No
 
 
 def draw_details() -> None:
+    """
+    Draws the detailed sections of the finance dashboard, including exchange rate fluctuations,
+    stock transaction details, and cash transaction details.
+    """
     streamlit.caption("汇率波动")
     exchange_rate = get_exchange_rate_details()
     streamlit.line_chart(
@@ -159,17 +202,159 @@ def draw_details() -> None:
     streamlit.table(currency_details)
 
 
-def current_finance_summary(
-    current_account: Tuple, current_ticker: Tuple, ticker_daily_price_df: pd.DataFrame
-) -> None:
+def convert_value(
+    value: float,
+    original_currency_type: CurrencyType,
+    target_currency_type: CurrencyType,
+    exchange_rates: pd.DataFrame,
+) -> float:
+    """
+    Converts a financial value from its original currency to a target currency using provided exchange rates.
+
+    Args:
+        value (float): The financial value to convert.
+        original_currency_type (CurrencyType): The original currency type of the value.
+        target_currency_type (CurrencyType): The desired target currency type.
+        exchange_rates (pd.DataFrame): DataFrame containing exchange rates, with columns "货币类型" and "汇率".
+
+    Returns:
+        float: The converted value in the target currency.
+    """
+    if original_currency_type == target_currency_type:
+        return value
+
+    # Convert original to USD first if it's not USD
+    if original_currency_type != CurrencyType.USD:
+        original_rate_row = exchange_rates[
+            exchange_rates["货币类型"] == original_currency_type.value
+        ]
+        if not original_rate_row.empty:
+            original_rate = original_rate_row["汇率"].iloc[0]
+            value_in_usd = value / original_rate
+        else:
+            value_in_usd = value  # Assume 1:1 if rate not found
+    else:
+        value_in_usd = value
+
+    # Convert from USD to target currency
+    if target_currency_type != CurrencyType.USD:
+        target_rate_row = exchange_rates[
+            exchange_rates["货币类型"] == target_currency_type.value
+        ]
+        if not target_rate_row.empty:
+            target_rate = target_rate_row["汇率"].iloc[0]
+            return value_in_usd * target_rate
+        else:
+            return value_in_usd  # Assume 1:1 if rate not found
+    else:
+        return value_in_usd
+
+
+def _get_initial_data() -> Tuple[Tuple, Tuple, pd.DataFrame]:
+    """Fetches initial account, ticker, and daily price data."""
+    current_account = get_current_account()
+    current_ticker = get_current_ticker()
+    ticker_daily_price_df = calculate_ticker_daily_price()
+    return current_account, current_ticker, ticker_daily_price_df
+
+
+def _handle_currency_selection_and_conversion(
+    current_account: Tuple, current_ticker: Tuple, exchange_rates_df: pd.DataFrame
+) -> Tuple[Tuple, Tuple, str]:
+    """Handles currency selection and converts account/ticker values."""
+    all_currencies = list(
+        set([CurrencyType.USD.value] + exchange_rates_df["货币类型"].tolist())
+    )
+    available_currencies = sorted(all_currencies)
+
+    usd_index = (
+        available_currencies.index(CurrencyType.USD.value)
+        if CurrencyType.USD.value in available_currencies
+        else 0
+    )
+
+    selected_currency_symbol = streamlit.selectbox(
+        "选择显示货币",
+        options=available_currencies,
+        index=usd_index,
+    )
+    selected_currency_type = CurrencyType(selected_currency_symbol)
+
+    converted_account_value = convert_value(
+        float(current_account[0]),
+        current_account[2],
+        selected_currency_type,
+        exchange_rates_df,
+    )
+    converted_account_yesterday_value = convert_value(
+        float(current_account[1]),
+        current_account[2],
+        selected_currency_type,
+        exchange_rates_df,
+    )
+    converted_account = (
+        converted_account_value,
+        converted_account_yesterday_value,
+        selected_currency_type,
+        current_account[3],
+    )
+
+    converted_ticker_value = convert_value(
+        float(current_ticker[0]),
+        current_ticker[2],
+        selected_currency_type,
+        exchange_rates_df,
+    )
+    converted_ticker_yesterday_value = convert_value(
+        float(current_ticker[1]),
+        current_ticker[2],
+        selected_currency_type,
+        exchange_rates_df,
+    )
+    converted_ticker = (
+        converted_ticker_value,
+        converted_ticker_yesterday_value,
+        selected_currency_type,
+        current_ticker[3],
+    )
+
+    return (
+        converted_account,
+        converted_ticker,
+        selected_currency_symbol,
+    )
+
+
+def current_finance_summary() -> None:
+    """Main function to display the current finance summary dashboard."""
     streamlit.title(":rainbow[我的财富看板]")
+
+    current_account, current_ticker, ticker_daily_price_df = _get_initial_data()
+    exchange_rates_df = get_exchange_rate_details()
+
+    (
+        converted_account,
+        converted_ticker,
+        selected_currency_symbol,
+    ) = _handle_currency_selection_and_conversion(
+        current_account, current_ticker, exchange_rates_df
+    )
 
     col1, col2 = streamlit.columns(2)
 
     with col1:
-        draw_left(current_account, current_ticker, ticker_daily_price_df)
+        draw_left(
+            converted_account,
+            current_ticker,
+            ticker_daily_price_df,
+            selected_currency_symbol,
+        )
     with col2:
-        draw_right(current_ticker, ticker_daily_price_df)
+        draw_right(
+            converted_ticker,
+            ticker_daily_price_df,
+            selected_currency_symbol,
+        )
 
     draw_details()
 
@@ -179,10 +364,6 @@ if __name__ == "__main__":
         page_title="当前财富看板",
         page_icon="💰",
         layout="wide",
-        initial_sidebar_state="collapsed",  # 关键设置：默认收起侧边栏
+        initial_sidebar_state="collapsed",
     )
-    current_account = get_current_account()
-    current_ticker = get_current_ticker()
-    ticker_daily_price_df = calculate_ticker_daily_price()
-
-    current_finance_summary(current_account, current_ticker, ticker_daily_price_df)
+    current_finance_summary()
