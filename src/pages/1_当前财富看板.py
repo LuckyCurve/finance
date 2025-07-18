@@ -262,21 +262,11 @@ def _handle_currency_selection_and_conversion(
     current_account: Tuple, current_ticker: Tuple, exchange_rates_df: pd.DataFrame
 ) -> Tuple[Tuple, Tuple, str]:
     """Handles currency selection and converts account/ticker values."""
-    all_currencies = list(
-        set([CurrencyType.USD.value] + exchange_rates_df["货币类型"].tolist())
-    )
-    available_currencies = sorted(all_currencies)
-
-    usd_index = (
-        available_currencies.index(CurrencyType.USD.value)
-        if CurrencyType.USD.value in available_currencies
-        else 0
-    )
+    all_currencies = [currency.value for currency in CurrencyType]
 
     selected_currency_symbol = streamlit.selectbox(
         "选择显示货币",
-        options=available_currencies,
-        index=usd_index,
+        options=all_currencies,
     )
     selected_currency_type = CurrencyType(selected_currency_symbol)
 

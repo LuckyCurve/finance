@@ -16,8 +16,8 @@ class Config(Base):
 
 
 class CurrencyType(enum.Enum):
-    CNY = "CNY"
     USD = "USD"
+    CNY = "CNY"
     HKD = "HKD"
 
 
