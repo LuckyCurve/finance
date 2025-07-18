@@ -227,28 +227,33 @@ def _sync_stock_asset(session):
     )
 
     df["date"] = pd.to_datetime(df["date"])
+    df["shares"] = df["shares"].astype(str).apply(Decimal)
+    df["price"] = df["price"].astype(str).apply(Decimal)
 
     # 对同一天同一股票的多笔交易进行聚合
     # 对于 shares，直接求和
     # 对于 price，计算加权平均
-    aggregated_df = (
-        df.groupby(["date", "ticker"], as_index=False) # Use as_index=False to keep grouping columns as regular columns
-        .apply(
-            lambda x: pd.Series(
-                {
-                    "shares_change": x["shares"].sum(),
-                    "weighted_price": (x["shares"] * x["price"]).sum()
-                    / x["shares"].sum()
-                    if x["shares"].sum() != 0
-                    else Decimal(0),
-                    "transaction_type": x["transaction_type"].iloc[0], # Take the first transaction type, assuming consistency
-                }
-            ),
-            include_groups=False # Explicitly exclude grouping columns from the result of apply
+    def aggregate_transactions(x):
+        shares_sum = x["shares"].sum()
+        if shares_sum != 0:
+            weighted_price = (x["shares"] * x["price"]).sum() / shares_sum
+        else:
+            weighted_price = Decimal(0)
+        
+        # Determine the effective transaction type for the day.
+        # If there are both buys and sells, this logic might need refinement
+        # based on desired behavior. For now, we'll just take the first one.
+        transaction_type = x["transaction_type"].iloc[0]
+
+        return pd.Series(
+            {
+                "shares_change": shares_sum,
+                "weighted_price": weighted_price,
+                "transaction_type": transaction_type,
+            }
         )
-    )
-    # If as_index=False is used, reset_index() might not be needed, but it's safer to keep it if the structure changes
-    # aggregated_df = aggregated_df.reset_index()
+
+    aggregated_df = df.groupby(["date", "ticker"]).apply(aggregate_transactions, include_groups=False).reset_index()
 
     full_date_range = pd.date_range(start=df["date"].min(), end=date.today())
 
@@ -257,47 +262,46 @@ def _sync_stock_asset(session):
         ticker_df = aggregated_df[aggregated_df["ticker"] == ticker_symbol].copy()
 
         # 确保所有日期都在 full_date_range 中，并填充缺失日期
-        ticker_df = ticker_df.set_index("date").reindex(full_date_range).reset_index()
+        ticker_df = ticker_df.set_index("date").reindex(full_date_range, fill_value=0).reset_index()
         ticker_df = ticker_df.rename(columns={"index": "date"})
+        ticker_df["shares_change"] = ticker_df["shares_change"].astype(str).apply(Decimal)
+        ticker_df["weighted_price"] = ticker_df["weighted_price"].astype(str).apply(Decimal)
 
         # 初始化每日持股数量和成本
         current_shares = Decimal(0)
         current_cost = Decimal(0)
 
         for _, row in ticker_df.iterrows():
-            if pd.isna(row["shares_change"]):  # 如果是缺失日期，则沿用前一天的资产状态
+            if row["shares_change"] == 0:  # 如果是缺失日期或无交易，则沿用前一天的资产状态
                 pass
             else:
-                shares_change = Decimal(str(row["shares_change"]))
-                price = Decimal(str(row["weighted_price"]))
-                transaction_type = row["transaction_type"]
+                shares_change = row["shares_change"]
+                price = row["weighted_price"]
 
-                if transaction_type == TransactionType.BUY:
+                if shares_change > 0: # Buy transaction
                     new_total_shares = current_shares + shares_change
                     if new_total_shares != 0:
                         current_cost = (current_cost * current_shares + price * shares_change) / new_total_shares
                     else:
                         current_cost = Decimal(0)
                     current_shares = new_total_shares
-                elif transaction_type == TransactionType.SELL:
-                    if current_shares < shares_change:
+                else: # Sell transaction
+                    shares_to_sell = -shares_change
+                    if current_shares < shares_to_sell:
                         raise Exception(
-                            f"transaction 数据出现异常，当前持有资产不足以出售，id: {row.get('id', 'N/A')}"
+                            f"transaction 数据出现异常，当前持有资产不足以出售，ticker: {ticker_symbol}, date: {row['date']}"
                         )
-                    current_shares -= shares_change
+                    current_shares -= shares_to_sell
                     # 卖出不改变平均成本，除非全部卖出
                     if current_shares == 0:
                         current_cost = Decimal(0)
-                else:
-                    # 对于其他未处理的交易类型，可以抛出异常或记录日志
-                    pass
 
             all_assets.append(
                 StockAsset(
                     ticker=ticker_symbol,
-                    shares=Decimal(str(current_shares)),
+                    shares=current_shares,
                     date=row["date"].date(),
-                    price=Decimal(str(current_cost)),
+                    price=current_cost,
                 )
             )
     session.add_all(all_assets)

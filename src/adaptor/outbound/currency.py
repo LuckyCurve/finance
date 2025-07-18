@@ -10,7 +10,7 @@ def get_exchange_rate(time: date) -> tuple[date, dict[str, Decimal]]:
     """获取 USD 兑其他货币的汇率数据
 
     Args:
-        datetime (datetime): 获取汇率的时间
+        time (date): 获取汇率的时间
 
     Returns:
         Dict[str, Decimal]: {货币类型, 汇率}
