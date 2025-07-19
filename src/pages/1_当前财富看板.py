@@ -14,7 +14,7 @@ import streamlit.components.v1 as components
 
 # Pyecharts imports
 from pyecharts import options as opts
-from pyecharts.charts import Pie
+from pyecharts.charts import Pie, Sunburst
 from pyecharts.commons.utils import JsCode
 from pyecharts.globals import ThemeType
 
@@ -36,9 +36,18 @@ from service.calculate import (
     calculate_ticker_daily_total_earn_rate,
 )
 
-PIE_TOOLTIP_FORMATTER = JsCode(
-    "function (params) { return params.marker + '<b>' + params.name + '</b> ' + params.value.toFixed(2) + ' (' + params.percent.toFixed(2) + '%)'; }"
-)
+
+def get_pie_tooltip_formatter(total_assets: float) -> JsCode:
+    return JsCode(
+        f"""
+        function (params) {{
+            var total_assets = {total_assets};
+            var formatted_value = new Intl.NumberFormat('en-US', {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }}).format(params.value);
+            var percentage = ((params.value / total_assets) * 100).toFixed(2);
+            return params.marker + '<b>' + params.name + '</b><br/>' + formatted_value + ' (' + percentage + '%)';
+        }}
+        """
+    )
 
 
 def draw_left(
@@ -66,31 +75,60 @@ def draw_left(
     )
 
     current_currency = get_current_currencies()
+    ticker_data = ticker_daily_price_df[
+        ticker_daily_price_df["Date"].dt.date == datetime.date.today() - timedelta(1)
+    ]
 
-    data = [
-        [
-            "股市",
-            round(float(original_current_ticker[0]), 2),
-        ]
-    ] + [[currency_type, value] for currency_type, value in current_currency]
-    data = sorted(data, key=lambda x: x[1], reverse=True)
+    sunburst_data = [
+        {
+            "name": "股市",
+            "value": round(float(original_current_ticker[0]), 2),
+            "children": [
+                {"name": row["Ticker"], "value": round(row["Price"], 2)}
+                for _, row in ticker_data.iterrows()
+            ],
+        },
+        {
+            "name": "现金",
+            "value": sum(v for _, v in current_currency),
+            "children": [
+                {"name": currency_type, "value": round(value, 2)}
+                for currency_type, value in current_currency
+            ],
+        },
+    ]
+
+    total_assets = sum(item.get("value", 0) for item in sunburst_data)
+    pie_tooltip_formatter = get_pie_tooltip_formatter(total_assets)
 
     html = (
-        Pie(init_opts=opts.InitOpts(theme=ThemeType.DARK))
+        Sunburst(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
         .add(
-            series_name="资产分配",
-            data_pair=data,
-            radius="50%",
+            "",
+            data_pair=sunburst_data,
+            radius=[0, "90%"],
+            highlight_policy="ancestor",
+            levels=[
+                {},
+                {
+                    "r0": "15%",
+                    "r": "55%",
+                    "itemStyle": {"borderWidth": 2},
+                    "label": {"rotate": "tangential"},
+                },
+                {"r0": "55%", "r": "80%", "label": {"align": "right"}},
+            ],
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(
-                title="总的资产分配",
-            ),
-            tooltip_opts=opts.TooltipOpts(formatter=PIE_TOOLTIP_FORMATTER),
+            title_opts=opts.TitleOpts(title="总的资产分配"),
+            tooltip_opts=opts.TooltipOpts(formatter=pie_tooltip_formatter),
+        )
+        .set_series_opts(
+            label_opts=opts.LabelOpts(formatter="{b}", font_size=14, position="outside")
         )
         .render_embed()
     )
-    components.html(html, height=500)
+    components.html(html, height=600)
 
     account_change_df = calculate_account_change()
     streamlit.caption("每日总资产变化图")
@@ -144,12 +182,15 @@ def draw_right(
         .iterrows()
     ]
 
+    total_ticker_value = sum(v for _, v in pie_data)
+    pie_tooltip_formatter = get_pie_tooltip_formatter(total_ticker_value)
+
     html = (
         Pie(init_opts=opts.InitOpts(theme=ThemeType.DARK))
         .add("市场份额", pie_data, radius=["30%", "60%"])
         .set_global_opts(
             title_opts=opts.TitleOpts(title="持有股票份额"),
-            tooltip_opts=opts.TooltipOpts(formatter=PIE_TOOLTIP_FORMATTER),
+            tooltip_opts=opts.TooltipOpts(formatter=pie_tooltip_formatter),
         )
         .render_embed()
     )
