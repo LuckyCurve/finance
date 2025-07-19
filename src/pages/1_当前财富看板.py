@@ -124,7 +124,8 @@ def draw_left(
             tooltip_opts=opts.TooltipOpts(formatter=pie_tooltip_formatter),
         )
         .set_series_opts(
-            label_opts=opts.LabelOpts(formatter="{b}", font_size=14, position="outside")
+            label_opts=opts.LabelOpts(formatter="{b}", font_size=14, position="outside"),
+            color=['#6E7074', '#5470C6', '#91CC75', '#EE6666', '#FC8452', '#73C0DE', '#3BA272', '#FC8452', '#9A60B4', '#EA7CCC']
         )
         .render_embed()
     )
