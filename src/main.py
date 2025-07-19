@@ -30,8 +30,3 @@ if __name__ == "__main__":
         label="股票买入和现金平账",
         icon="✍️",
     )
-
-
-# adjust_currency(51781.2 + 464705.2, CurrencyType.CNY)
-# adjust_currency(340916.2 + 717.8, CurrencyType.HKD)
-# adjust_currency(1231.8 + 3270, CurrencyType.USD)
