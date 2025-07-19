@@ -195,7 +195,7 @@ def draw_right(
         .render_embed()
     )
 
-    components.html(html, height=500)
+    components.html(html, height=600)
 
     streamlit.caption("个股营收百分比%")
     streamlit.line_chart(
