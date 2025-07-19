@@ -30,3 +30,8 @@ if __name__ == "__main__":
         label="股票买入和现金平账",
         icon="✍️",
     )
+    streamlit.page_link(
+        "pages/4_汇率换算.py",
+        label="汇率换算",
+        icon="💱",
+    )

@@ -182,16 +182,6 @@ def draw_details(exchange_rate: pd.DataFrame) -> None:
     Draws the detailed sections of the finance dashboard, including exchange rate fluctuations,
     stock transaction details, and cash transaction details.
     """
-    streamlit.caption("汇率波动")
-    streamlit.line_chart(
-        exchange_rate,
-        x="日期",
-        y="汇率",
-        color="货币类型",
-        x_label="日期",
-        y_label="汇率",
-    )
-
     streamlit.caption("股票交易详细数据")
     ticker_details = get_ticker_transaction_details()
     streamlit.table(ticker_details)
