@@ -1,76 +1,105 @@
 """
-This Streamlit application provides a currency exchange rate lookup and conversion tool.
-It displays the latest exchange rates and allows users to convert amounts between currencies.
+该Streamlit应用程序提供汇率查询和货币换算工具。
+它显示最新的汇率，并允许用户在不同货币之间进行金额换算。
 """
 
 import streamlit
 from datetime import date
+from typing import Dict
 
-from adaptor.inbound.show_data import get_exchange_rate_details
-from adaptor.outbound.currency import get_exchange_rate
-from db.entity import CurrencyType
+import pandas as pd
+
+from service.exchange_rate_service import (
+    convert_currency,
+    fetch_historical_exchange_rates,
+    fetch_latest_exchange_rates,
+)
 
 
-def display_exchange_rates() -> None:
+def _render_title() -> None:
+    """渲染页面标题。"""
+    streamlit.title(":rainbow[汇率换算工具]")
+
+
+def _display_latest_exchange_rates(
+    current_date: date, exchange_rates: Dict[str, float]
+) -> None:
     """
-    Displays the latest exchange rates in a user-friendly format.
-    """
-    # Get today's date and exchange rates
-    current_date, exchange_rates = get_exchange_rate(date.today())
+    显示最新的汇率数据。
 
-    # Display the exchange rates
+    Args:
+        current_date (date): 汇率数据的日期。
+        exchange_rates (Dict[str, float]): 货币代码到汇率的映射字典。
+    """
     streamlit.subheader(f"最新汇率数据 - {current_date.strftime('%Y-%m-%d')}")
     for currency, rate in exchange_rates.items():
-        streamlit.write(f"1 USD = {float(rate):.2f} {currency}")
+        streamlit.write(f"1 USD = {rate:.2f} {currency}")
 
-    # Display historical exchange rate chart
+
+def _display_historical_exchange_rates(exchange_rate_df: pd.DataFrame) -> None:
+    """
+    显示历史汇率变化图表。
+
+    Args:
+        exchange_rate_df (pd.DataFrame): 包含历史汇率的DataFrame。
+    """
     streamlit.subheader("历史汇率变化")
-    exchange_rate_df = get_exchange_rate_details()
     streamlit.line_chart(exchange_rate_df, x="日期", y="汇率", color="货币类型")
 
 
-def currency_converter() -> None:
+def _render_currency_converter(exchange_rates: Dict[str, float]) -> None:
     """
-    Provides a currency conversion tool for users to convert amounts between currencies.
+    渲染货币换算工具并处理转换逻辑。
+
+    Args:
+        exchange_rates (Dict[str, float]): 货币代码到汇率的映射字典。
     """
     streamlit.subheader("货币换算")
 
-    # Get today's exchange rates
-    current_date, exchange_rates = get_exchange_rate(date.today())
-
-    # Input fields for conversion
+    # 输入字段
     amount = streamlit.number_input("输入金额", value=1.0, min_value=0.0)
-    from_currency = streamlit.selectbox("从哪种货币", options=list(exchange_rates.keys()))
-    to_currency = streamlit.selectbox("转换为哪种货币", options=list(exchange_rates.keys()))
+    currency_options = list(exchange_rates.keys())
+    from_currency = streamlit.selectbox("从哪种货币", options=currency_options)
+    to_currency = streamlit.selectbox("转换为哪种货币", options=currency_options)
 
-    # Perform conversion
-    if from_currency == to_currency:
-        converted_amount = amount
-    elif from_currency == "USD":
-        converted_amount = amount * float(exchange_rates[to_currency])
-    else:
-        # Convert from_currency to USD first, then to to_currency
-        amount_in_usd = amount / float(exchange_rates[from_currency])
-        converted_amount = amount_in_usd * float(exchange_rates[to_currency])
-
-    # Display result
+    # 执行转换并显示结果
+    converted_amount = convert_currency(amount, from_currency, to_currency, exchange_rates)
     streamlit.success(f"{amount} {from_currency} = {converted_amount:.2f} {to_currency}")
 
 
 def exchange_rate_dashboard() -> None:
-    """Main function to display the exchange rate dashboard."""
-    streamlit.title(":rainbow[汇率换算工具]")
+    """
+    主函数，用于显示汇率换算仪表盘。
+    该函数负责协调数据获取、UI渲染和货币转换功能。
+    """
+    _render_title()
 
-    display_exchange_rates()
+    # 1. 数据获取阶段
+    # 获取最新汇率数据
+    current_date, latest_exchange_rates = fetch_latest_exchange_rates()
+    # 获取历史汇率数据
+    historical_exchange_rates_df = fetch_historical_exchange_rates()
+
+    # 2. UI展示阶段
+    # 显示最新汇率
+    _display_latest_exchange_rates(current_date, latest_exchange_rates)
+    # 添加分隔线
     streamlit.markdown("---")
-    currency_converter()
+    # 显示历史汇率图表
+    _display_historical_exchange_rates(historical_exchange_rates_df)
+    # 添加分隔线
+    streamlit.markdown("---")
+    # 渲染货币换算工具
+    _render_currency_converter(latest_exchange_rates)
 
 
 if __name__ == "__main__":
+    # 配置Streamlit页面
     streamlit.set_page_config(
-        page_title="汇率换算",
-        page_icon="💱",
-        layout="wide",
-        initial_sidebar_state="collapsed",
+        page_title="汇率换算",  # 页面标题
+        page_icon="💱",  # 页面图标
+        layout="wide",  # 页面布局为宽屏
+        initial_sidebar_state="collapsed",  # 初始侧边栏状态为折叠
     )
+    # 运行主仪表盘函数
     exchange_rate_dashboard()
