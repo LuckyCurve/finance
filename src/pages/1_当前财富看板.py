@@ -14,7 +14,7 @@ import streamlit.components.v1 as components
 
 # Pyecharts imports
 from pyecharts import options as opts
-from pyecharts.charts import Pie, Sunburst
+from pyecharts.charts import Bar, Line, Pie, Sunburst
 from pyecharts.commons.utils import JsCode
 from pyecharts.globals import ThemeType
 
@@ -132,24 +132,51 @@ def draw_left(
     components.html(html, height=600)
 
     account_change_df = calculate_account_change()
+    account_change_df["Date"] = pd.to_datetime(account_change_df["Date"])
     streamlit.caption("每日总资产变化图")
-    streamlit.line_chart(
-        account_change_df,
-        x="Date",
-        y="Currency",
-        x_label="日期",
-        y_label="总财富",
+    line_chart = (
+        Line(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
+        .add_xaxis(xaxis_data=account_change_df["Date"].dt.strftime("%Y-%m-%d").tolist())
+        .add_yaxis(
+            series_name="总财富",
+            y_axis=account_change_df["Currency"].tolist(),
+            markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max"), opts.MarkPointItem(type_="min")]),
+            markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")]),
+        )
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="每日总资产变化", subtitle="单位: 美元"),
+            tooltip_opts=opts.TooltipOpts(trigger="axis"),
+            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
+            xaxis_opts=opts.AxisOpts(name="日期"),
+            yaxis_opts=opts.AxisOpts(name="总财富"),
+        )
+        .render_embed()
     )
+    components.html(line_chart, height=500)
 
     streamlit.caption("每日股票份额")
-    streamlit.bar_chart(
-        ticker_daily_price_df,
-        x="Date",
-        y="Price",
-        color="Ticker",
-        x_label="日期",
-        y_label="市场价格",
+    bar_chart = (
+        Bar(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
+        .add_xaxis(xaxis_data=ticker_daily_price_df["Date"].dt.strftime("%Y-%m-%d").unique().tolist())
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="每日股票市值", subtitle="单位: 美元"),
+            tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="shadow"),
+            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
+            xaxis_opts=opts.AxisOpts(name="日期"),
+            yaxis_opts=opts.AxisOpts(name="市场价格"),
+            legend_opts=opts.LegendOpts(pos_left="center", pos_top="bottom"),
+        )
     )
+
+    for ticker in ticker_daily_price_df["Ticker"].unique():
+        ticker_df = ticker_daily_price_df[ticker_daily_price_df["Ticker"] == ticker]
+        bar_chart.add_yaxis(
+            series_name=ticker,
+            y_axis=ticker_df["Price"].tolist(),
+            stack="total",
+            label_opts=opts.LabelOpts(is_show=False),
+        )
+    components.html(bar_chart.render_embed(), height=500)
 
 
 def draw_right(
@@ -198,39 +225,51 @@ def draw_right(
 
     components.html(html, height=600)
 
+    earn_rate_df = calculate_ticker_daily_total_earn_rate()
     streamlit.caption("个股营收百分比%")
-    streamlit.line_chart(
-        calculate_ticker_daily_total_earn_rate(),
-        x="Date",
-        y="TotalEarnRate",
-        color="Ticker",
-        x_label="日期",
-        y_label="总收益百分比",
+    line_earn_rate = (
+        Line(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
+        .add_xaxis(xaxis_data=earn_rate_df["Date"].dt.strftime("%Y-%m-%d").unique().tolist())
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="个股总收益率", subtitle="单位: %"),
+            tooltip_opts=opts.TooltipOpts(trigger="axis"),
+            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
+            xaxis_opts=opts.AxisOpts(name="日期"),
+            yaxis_opts=opts.AxisOpts(name="总收益百分比"),
+            legend_opts=opts.LegendOpts(pos_left="center", pos_top="bottom"),
+        )
     )
+    for ticker in earn_rate_df["Ticker"].unique():
+        ticker_df = earn_rate_df[earn_rate_df["Ticker"] == ticker]
+        line_earn_rate.add_yaxis(
+            series_name=ticker,
+            y_axis=ticker_df["TotalEarnRate"].tolist(),
+            label_opts=opts.LabelOpts(is_show=False),
+        )
+    components.html(line_earn_rate.render_embed(), height=500)
 
+    daily_change_df = calculate_ticker_daily_change()
     streamlit.caption("每日个股涨跌图")
-    streamlit.line_chart(
-        calculate_ticker_daily_change(),
-        x="Date",
-        y="Earn",
-        color="Ticker",
-        x_label="日期",
-        y_label="涨跌幅",
+    line_daily_change = (
+        Line(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
+        .add_xaxis(xaxis_data=daily_change_df["Date"].dt.strftime("%Y-%m-%d").unique().tolist())
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="每日个股涨跌", subtitle="单位: 美元"),
+            tooltip_opts=opts.TooltipOpts(trigger="axis"),
+            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
+            xaxis_opts=opts.AxisOpts(name="日期"),
+            yaxis_opts=opts.AxisOpts(name="涨跌幅"),
+            legend_opts=opts.LegendOpts(pos_left="center", pos_top="bottom"),
+        )
     )
-
-
-def draw_details(exchange_rate: pd.DataFrame) -> None:
-    """
-    Draws the detailed sections of the finance dashboard, including exchange rate fluctuations,
-    stock transaction details, and cash transaction details.
-    """
-    streamlit.caption("股票交易详细数据")
-    ticker_details = get_ticker_transaction_details()
-    streamlit.table(ticker_details)
-
-    streamlit.caption("现金交易详细数据")
-    currency_details = get_currency_transaction_details()
-    streamlit.table(currency_details)
+    for ticker in daily_change_df["Ticker"].unique():
+        ticker_df = daily_change_df[daily_change_df["Ticker"] == ticker]
+        line_daily_change.add_yaxis(
+            series_name=ticker,
+            y_axis=ticker_df["Earn"].tolist(),
+            label_opts=opts.LabelOpts(is_show=False),
+        )
+    components.html(line_daily_change.render_embed(), height=500)
 
 
 def convert_value(
@@ -376,8 +415,6 @@ def current_finance_summary() -> None:
             ticker_daily_price_df,
             selected_currency_symbol,
         )
-
-    draw_details(exchange_rates)
 
 
 if __name__ == "__main__":
