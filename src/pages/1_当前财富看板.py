@@ -14,7 +14,7 @@ import streamlit.components.v1 as components
 
 # Pyecharts imports
 from pyecharts import options as opts
-from pyecharts.charts import Bar, Line, Sunburst
+from pyecharts.charts import Bar, Gauge, Line, Sunburst
 from pyecharts.commons.utils import JsCode
 from pyecharts.globals import ThemeType
 
@@ -161,6 +161,43 @@ def _handle_currency_selection_and_conversion(
     )
 
 
+def calculate_portfolio_return_rate() -> float:
+    """
+    Calculates the weighted average return rate of the entire portfolio based on the latest data.
+
+    Returns:
+        float: The overall portfolio return rate as a percentage.
+    """
+    # Get the latest date (yesterday)
+    latest_date = datetime.date.today() - timedelta(1)
+
+    # Fetch daily total earn rate and price data
+    earn_rate_df = calculate_ticker_daily_total_earn_rate()
+    price_df = calculate_ticker_daily_price()
+
+    # Filter data for the latest date
+    latest_earn_rate = earn_rate_df[earn_rate_df["Date"].dt.date == latest_date]
+    latest_prices = price_df[price_df["Date"].dt.date == latest_date]
+
+    if latest_earn_rate.empty or latest_prices.empty:
+        return 0.0
+
+    # Calculate weights based on market value
+    total_value = latest_prices["Price"].sum()
+    if total_value == 0:
+        return 0.0
+
+    weighted_return = 0.0
+    for _, row in latest_earn_rate.iterrows():
+        ticker = row["Ticker"]
+        return_rate = row["TotalEarnRate"]
+        market_value = latest_prices[latest_prices["Ticker"] == ticker]["Price"].iloc[0]
+        weight = market_value / total_value
+        weighted_return += return_rate * weight
+
+    return round(float(weighted_return), 2)
+
+
 def current_finance_summary() -> None:
     """Main function to display the current finance summary dashboard."""
     streamlit.title(":rainbow[我的财富看板]")
@@ -263,9 +300,23 @@ def current_finance_summary() -> None:
     )
     components.html(sunburst_chart, height=600)
 
-    # Daily total asset change chart
+    # Daily total asset change chart with optimized display for small changes
     account_change_df = calculate_account_change()
     account_change_df["Date"] = pd.to_datetime(account_change_df["Date"])
+    
+    # Calculate dynamic min/max values to better show small changes
+    values = account_change_df["Currency"]
+    min_val = values.min()
+    max_val = values.max()
+
+    # Add a buffer to the min and max to ensure the line is not at the very edge
+    buffer = (max_val - min_val) * 0.1  # 10% buffer
+    if buffer == 0:  # Handle case where all values are the same
+        buffer = max_val * 0.01 if max_val > 0 else 1  # 1% of the value or 1 if value is 0
+
+    min_value = min_val - buffer
+    max_value = max_val + buffer
+    
     line_chart = (
         Line(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
         .add_xaxis(
@@ -284,7 +335,11 @@ def current_finance_summary() -> None:
             tooltip_opts=opts.TooltipOpts(trigger="axis"),
             datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
             xaxis_opts=opts.AxisOpts(name="日期"),
-            yaxis_opts=opts.AxisOpts(name="总财富"),
+            yaxis_opts=opts.AxisOpts(
+                name="总财富",
+                min_=min_value,
+                max_=max_value
+            ),
         )
         .render_embed()
     )
@@ -364,6 +419,25 @@ def current_finance_summary() -> None:
             label_opts=opts.LabelOpts(is_show=False),
         )
     components.html(line_daily_change.render_embed(), height=600)
+
+    # Portfolio return rate gauge chart
+    portfolio_return_rate = calculate_portfolio_return_rate()
+    gauge_chart = (
+        Gauge(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
+        .add(
+            series_name="投资组合收益率",
+            data_pair=[("", portfolio_return_rate)],
+            progress=True,  # Enable progress bar
+            radius="95%",  # Set radius for the gauge
+            # No detail_label_opts needed - use default formatting
+        )
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="投资组合整体收益率", subtitle="单位: %"),
+            legend_opts=opts.LegendOpts(is_show=False),
+        )
+        .render_embed()
+    )
+    components.html(gauge_chart, height=400)
 
 
 if __name__ == "__main__":
