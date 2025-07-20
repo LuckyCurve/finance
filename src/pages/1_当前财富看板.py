@@ -4,96 +4,27 @@ displaying current wealth, stock data, asset allocation, and transaction details
 It includes functionality to switch between different currency views for wealth and stock metrics.
 """
 
-import datetime
-from datetime import timedelta
 from typing import Tuple
 
 import pandas as pd
 import streamlit
-import streamlit.components.v1 as components
 
-# Pyecharts imports
-from pyecharts import options as opts
-from pyecharts.charts import Bar, Line, Sunburst
-from pyecharts.commons.utils import JsCode
-from pyecharts.globals import ThemeType
-
-# Local application imports
 from adaptor.inbound.show_data import (
     CurrencyType,
-    format_decimal,
     get_current_account,
-    get_current_currencies,
     get_current_ticker,
     get_exchange_rate_details,
 )
-from service.calculate import (
-    calculate_account_change,
-    calculate_ticker_daily_change,
-    calculate_ticker_daily_price,
-    calculate_ticker_daily_total_earn_rate,
+from pages.components.charts import (
+    create_daily_change_line_chart,
+    create_stock_earn_rate_line_chart,
+    create_stock_market_bar_chart,
+    create_sunburst_chart,
+    create_total_assets_line_chart,
 )
-
-
-def get_pie_tooltip_formatter(total_assets: float) -> JsCode:
-    return JsCode(
-        f"""
-        function (params) {{
-            var total_assets = {total_assets};
-            var formatted_value = new Intl.NumberFormat('en-US', {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }}).format(params.value);
-            var percentage = ((params.value / total_assets) * 100).toFixed(2);
-            return params.marker + '<b>' + params.name + '</b><br/>' + formatted_value + ' (' + percentage + '%)';
-        }}
-        """
-    )
-
-
-def convert_value(
-    value: float,
-    original_currency_type: CurrencyType,
-    target_currency_type: CurrencyType,
-    exchange_rates: pd.DataFrame,
-) -> float:
-    """
-    Converts a financial value from its original currency to a target currency using provided exchange rates.
-
-    Args:
-        value (float): The financial value to convert.
-        original_currency_type (CurrencyType): The original currency type of the value.
-        target_currency_type (CurrencyType): The desired target currency type.
-        exchange_rates (pd.DataFrame): DataFrame containing exchange rates, with columns "货币类型" and "汇率".
-
-    Returns:
-        float: The converted value in the target currency.
-    """
-    if original_currency_type == target_currency_type:
-        return value
-
-    # Convert original to USD first if it's not USD
-    if original_currency_type != CurrencyType.USD:
-        original_rate_row = exchange_rates[
-            exchange_rates["货币类型"] == original_currency_type.value
-        ]
-        if not original_rate_row.empty:
-            original_rate = original_rate_row["汇率"].iloc[0]
-            value_in_usd = value / original_rate
-        else:
-            value_in_usd = value  # Assume 1:1 if rate not found
-    else:
-        value_in_usd = value
-
-    # Convert from USD to target currency
-    if target_currency_type != CurrencyType.USD:
-        target_rate_row = exchange_rates[
-            exchange_rates["货币类型"] == target_currency_type.value
-        ]
-        if not target_rate_row.empty:
-            target_rate = target_rate_row["汇率"].iloc[0]
-            return value_in_usd * target_rate
-        else:
-            return value_in_usd  # Assume 1:1 if rate not found
-    else:
-        return value_in_usd
+from pages.components.metrics import display_finance_metrics
+from pages.utils.common import convert_value
+from service.calculate import calculate_ticker_daily_price
 
 
 def _get_initial_data() -> Tuple[Tuple, Tuple, pd.DataFrame]:
@@ -176,210 +107,17 @@ def current_finance_summary() -> None:
         current_account, current_ticker, exchange_rates
     )
 
-    col1, col2 = streamlit.columns(2)
-    with col1:
-        streamlit.metric(
-            label=f"我的财富总值 {converted_account[3]}",
-            value=f"{format_decimal(converted_account[0])} {selected_currency_symbol}",
-            delta=f"{format_decimal(converted_account[0] - converted_account[1])}",
-        )
-    with col2:
-        streamlit.metric(
-            label=f"我的股市数据 {converted_ticker[3]}",
-            value=f"{format_decimal(converted_ticker[0])} {selected_currency_symbol}",
-            delta=f"{format_decimal(converted_ticker[0] - converted_ticker[1])}",
-        )
+    display_finance_metrics(
+        converted_account, converted_ticker, selected_currency_symbol
+    )
 
     streamlit.write("\n")
-    streamlit.write("\n")
-    streamlit.write("\n")
-    streamlit.write("\n")
 
-    # Asset allocation sunburst chart
-    current_currency = get_current_currencies()
-    ticker_data = ticker_daily_price_df[
-        ticker_daily_price_df["Date"].dt.date == datetime.date.today() - timedelta(1)
-    ]
-    sunburst_data = [
-        {
-            "name": "股市",
-            "value": round(float(current_ticker[0]), 2),
-            "children": [
-                {"name": row["Ticker"], "value": round(row["Price"], 2)}
-                for _, row in ticker_data.iterrows()
-            ],
-        },
-        {
-            "name": "现金",
-            "value": sum(v for _, v in current_currency),
-            "children": [
-                {"name": currency_type, "value": round(value, 2)}
-                for currency_type, value in current_currency
-            ],
-        },
-    ]
-    total_assets = sum(item.get("value", 0) for item in sunburst_data)
-    pie_tooltip_formatter = get_pie_tooltip_formatter(total_assets)
-    sunburst_chart = (
-        Sunburst(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
-        .add(
-            "",
-            data_pair=sunburst_data,
-            radius=[0, "90%"],
-            highlight_policy="ancestor",
-            levels=[
-                {},
-                {
-                    "r0": "15%",
-                    "r": "55%",
-                    "itemStyle": {"borderWidth": 2},
-                    "label": {"rotate": "tangential"},
-                },
-                {"r0": "55%", "r": "80%", "label": {"align": "right"}},
-            ],
-        )
-        .set_global_opts(
-            title_opts=opts.TitleOpts(title="总的资产分配"),
-            tooltip_opts=opts.TooltipOpts(formatter=pie_tooltip_formatter),
-        )
-        .set_series_opts(
-            label_opts=opts.LabelOpts(
-                formatter="{b}", font_size=14, position="outside"
-            ),
-            color=[
-                "#6E7074",
-                "#5470C6",
-                "#91CC75",
-                "#EE6666",
-                "#FC8452",
-                "#73C0DE",
-                "#3BA272",
-                "#FC8452",
-                "#9A60B4",
-                "#EA7CCC",
-            ],
-        )
-        .render_embed()
-    )
-    components.html(sunburst_chart, height=600)
-
-    # Daily total asset change chart with optimized display for small changes
-    account_change_df = calculate_account_change()
-    account_change_df["Date"] = pd.to_datetime(account_change_df["Date"])
-
-    # Calculate dynamic min/max values to better show small changes
-    values = account_change_df["Currency"]
-    min_val = values.min()
-    max_val = values.max()
-
-    # Add a buffer to the min and max to ensure the line is not at the very edge
-    buffer = (max_val - min_val) * 0.1  # 10% buffer
-    if buffer == 0:  # Handle case where all values are the same
-        buffer = (
-            max_val * 0.01 if max_val > 0 else 1
-        )  # 1% of the value or 1 if value is 0
-
-    min_value = min_val - buffer
-    max_value = max_val + buffer
-
-    line_chart = (
-        Line(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
-        .add_xaxis(
-            xaxis_data=account_change_df["Date"].dt.strftime("%Y-%m-%d").tolist()
-        )
-        .add_yaxis(
-            series_name="总财富",
-            y_axis=account_change_df["Currency"].tolist(),
-            markpoint_opts=opts.MarkPointOpts(
-                data=[opts.MarkPointItem(type_="max"), opts.MarkPointItem(type_="min")]
-            ),
-            markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")]),
-        )
-        .set_global_opts(
-            title_opts=opts.TitleOpts(title="每日总资产变化", subtitle="单位: 美元"),
-            tooltip_opts=opts.TooltipOpts(trigger="axis"),
-            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
-            xaxis_opts=opts.AxisOpts(name="日期"),
-            yaxis_opts=opts.AxisOpts(name="总财富", min_=min_value, max_=max_value),
-        )
-        .render_embed()
-    )
-    components.html(line_chart, height=600)
-
-    # Daily stock share bar chart
-    bar_chart = (
-        Bar(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
-        .add_xaxis(
-            xaxis_data=ticker_daily_price_df["Date"]
-            .dt.strftime("%Y-%m-%d")
-            .unique()
-            .tolist()
-        )
-        .set_global_opts(
-            title_opts=opts.TitleOpts(title="每日股票市值", subtitle="单位: 美元"),
-            tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="shadow"),
-            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
-            xaxis_opts=opts.AxisOpts(name="日期"),
-            yaxis_opts=opts.AxisOpts(name="市场价格"),
-        )
-    )
-    for ticker in ticker_daily_price_df["Ticker"].unique():
-        ticker_df = ticker_daily_price_df[ticker_daily_price_df["Ticker"] == ticker]
-        bar_chart.add_yaxis(
-            series_name=ticker,
-            y_axis=ticker_df["Price"].tolist(),
-            stack="total",
-            label_opts=opts.LabelOpts(is_show=False),
-        )
-    components.html(bar_chart.render_embed(), height=600)
-
-    # Individual stock revenue percentage chart
-    earn_rate_df = calculate_ticker_daily_total_earn_rate()
-    line_earn_rate = (
-        Line(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
-        .add_xaxis(
-            xaxis_data=earn_rate_df["Date"].dt.strftime("%Y-%m-%d").unique().tolist()
-        )
-        .set_global_opts(
-            title_opts=opts.TitleOpts(title="个股总收益率", subtitle="单位: %"),
-            tooltip_opts=opts.TooltipOpts(trigger="axis"),
-            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
-            xaxis_opts=opts.AxisOpts(name="日期"),
-            yaxis_opts=opts.AxisOpts(name="总收益百分比"),
-        )
-    )
-    for ticker in earn_rate_df["Ticker"].unique():
-        ticker_df = earn_rate_df[earn_rate_df["Ticker"] == ticker]
-        line_earn_rate.add_yaxis(
-            series_name=ticker,
-            y_axis=ticker_df["TotalEarnRate"].tolist(),
-            label_opts=opts.LabelOpts(is_show=False),
-        )
-    components.html(line_earn_rate.render_embed(), height=600)
-
-    # Daily individual stock change chart
-    daily_change_df = calculate_ticker_daily_change()
-    line_daily_change = (
-        Line(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
-        .add_xaxis(
-            xaxis_data=daily_change_df["Date"].dt.strftime("%Y-%m-%d").unique().tolist()
-        )
-        .set_global_opts(
-            title_opts=opts.TitleOpts(title="每日个股涨跌", subtitle="单位: 美元"),
-            tooltip_opts=opts.TooltipOpts(trigger="axis"),
-            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
-            xaxis_opts=opts.AxisOpts(name="日期"),
-            yaxis_opts=opts.AxisOpts(name="涨跌幅"),
-        )
-    )
-    for ticker in daily_change_df["Ticker"].unique():
-        ticker_df = daily_change_df[daily_change_df["Ticker"] == ticker]
-        line_daily_change.add_yaxis(
-            series_name=ticker,
-            y_axis=ticker_df["Earn"].tolist(),
-            label_opts=opts.LabelOpts(is_show=False),
-        )
-    components.html(line_daily_change.render_embed(), height=600)
+    create_sunburst_chart(current_ticker[0], ticker_daily_price_df)
+    create_total_assets_line_chart()
+    create_stock_market_bar_chart(ticker_daily_price_df)
+    create_stock_earn_rate_line_chart()
+    create_daily_change_line_chart()
 
 
 if __name__ == "__main__":
