@@ -11,19 +11,14 @@ from pyecharts import options as opts
 from pyecharts.charts import Bar, Line, Sunburst
 from pyecharts.globals import ThemeType
 
-from adaptor.inbound.show_data import get_current_currencies
-from service.calculate import (
-    calculate_account_change,
-    calculate_ticker_daily_change,
-    calculate_ticker_daily_price,
-    calculate_ticker_daily_total_earn_rate,
-)
 from pages.utils.common import get_pie_tooltip_formatter
 
 
-def create_sunburst_chart(current_ticker_value: float, ticker_daily_price_df: pd.DataFrame):
+def create_sunburst_chart(
+    current_ticker_value: float, ticker_daily_price_df: pd.DataFrame, current_currencies: list
+):
     """Creates and displays the asset allocation sunburst chart."""
-    current_currency = get_current_currencies()
+    # current_currency = get_current_currencies() # 移除内部调用
     ticker_data = ticker_daily_price_df[
         ticker_daily_price_df["Date"].dt.date == datetime.date.today() - timedelta(1)
     ]
@@ -38,10 +33,10 @@ def create_sunburst_chart(current_ticker_value: float, ticker_daily_price_df: pd
         },
         {
             "name": "现金",
-            "value": sum(v for _, v in current_currency),
+            "value": sum(v for _, v in current_currencies), # 使用传入的 current_currencies
             "children": [
                 {"name": currency_type, "value": round(value, 2)}
-                for currency_type, value in current_currency
+                for currency_type, value in current_currencies
             ],
         },
     ]
@@ -91,9 +86,9 @@ def create_sunburst_chart(current_ticker_value: float, ticker_daily_price_df: pd
     components.html(sunburst_chart, height=600)
 
 
-def create_total_assets_line_chart():
+def create_total_assets_line_chart(account_change_df: pd.DataFrame, currency_symbol: str):
     """Creates and displays the daily total asset change line chart."""
-    account_change_df = calculate_account_change()
+    # account_change_df = calculate_account_change() # 移除内部调用
     account_change_df["Date"] = pd.to_datetime(account_change_df["Date"])
 
     values = account_change_df["Currency"]
@@ -115,7 +110,7 @@ def create_total_assets_line_chart():
             markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")]),
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(title="每日总资产变化", subtitle="单位: 美元"),
+            title_opts=opts.TitleOpts(title="每日总资产变化", subtitle=f"单位: {currency_symbol}"), # 动态单位
             tooltip_opts=opts.TooltipOpts(trigger="axis"),
             datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
             xaxis_opts=opts.AxisOpts(name="日期"),
@@ -126,7 +121,7 @@ def create_total_assets_line_chart():
     components.html(line_chart, height=600)
 
 
-def create_stock_market_bar_chart(ticker_daily_price_df: pd.DataFrame):
+def create_stock_market_bar_chart(ticker_daily_price_df: pd.DataFrame, currency_symbol: str):
     """Creates and displays the daily stock market value bar chart."""
     bar_chart = (
         Bar(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
@@ -137,7 +132,7 @@ def create_stock_market_bar_chart(ticker_daily_price_df: pd.DataFrame):
             .tolist()
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(title="每日股票市值", subtitle="单位: 美元"),
+            title_opts=opts.TitleOpts(title="每日股票市值", subtitle=f"单位: {currency_symbol}"), # 动态单位
             tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="shadow"),
             datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
             xaxis_opts=opts.AxisOpts(name="日期"),
@@ -155,9 +150,9 @@ def create_stock_market_bar_chart(ticker_daily_price_df: pd.DataFrame):
     components.html(bar_chart.render_embed(), height=600)
 
 
-def create_stock_earn_rate_line_chart():
+def create_stock_earn_rate_line_chart(earn_rate_df: pd.DataFrame):
     """Creates and displays the individual stock total earn rate line chart."""
-    earn_rate_df = calculate_ticker_daily_total_earn_rate()
+    # earn_rate_df = calculate_ticker_daily_total_earn_rate() # 移除内部调用
     line_earn_rate = (
         Line(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
         .add_xaxis(
@@ -181,16 +176,16 @@ def create_stock_earn_rate_line_chart():
     components.html(line_earn_rate.render_embed(), height=600)
 
 
-def create_daily_change_line_chart():
+def create_daily_change_line_chart(daily_change_df: pd.DataFrame, currency_symbol: str):
     """Creates and displays the daily individual stock change line chart."""
-    daily_change_df = calculate_ticker_daily_change()
+    # daily_change_df = calculate_ticker_daily_change() # 移除内部调用
     line_daily_change = (
         Line(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
         .add_xaxis(
             xaxis_data=daily_change_df["Date"].dt.strftime("%Y-%m-%d").unique().tolist()
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(title="每日个股涨跌", subtitle="单位: 美元"),
+            title_opts=opts.TitleOpts(title="每日个股涨跌", subtitle=f"单位: {currency_symbol}"), # 动态单位
             tooltip_opts=opts.TooltipOpts(trigger="axis"),
             datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
             xaxis_opts=opts.AxisOpts(name="日期"),

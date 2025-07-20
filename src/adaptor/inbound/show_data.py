@@ -1,10 +1,10 @@
 # 完成首页的数据展示
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import List, Literal
+from typing import List, Literal, Tuple
 
-import streamlit
 import pandas as pd
+import streamlit
 from numerize.numerize import numerize
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
@@ -12,11 +12,13 @@ from sqlalchemy.orm import Session
 import db
 from db.entity import (
     Account,
+    AccountData, # 导入 AccountData
     CurrencyAsset,
     CurrencyTransaction,
     CurrencyType,
     ExchangedRate,
     StockTransaction,
+    TickerData, # 导入 TickerData
     TransactionType,
 )
 from service.calculate import calculate_each_day_ticker_price
@@ -32,11 +34,11 @@ def format_decimal(data) -> str:
 
 
 @streamlit.cache_data
-def get_current_account() -> tuple[Decimal, Decimal, CurrencyType, date]:
+def get_current_account() -> Tuple[float, float, CurrencyType, date]: # 修改返回类型提示
     """获取相应的财富总值
 
     Returns:
-        tuple[Decimal, Decimal, CurrencyType, date]:
+        Tuple[float, float, CurrencyType, date]: # 修改返回类型提示
             - 今天的财富总值
             - 昨天的财富总值,用于计算财富变化
             - 货币计价类型, 默认 USD
@@ -44,15 +46,16 @@ def get_current_account() -> tuple[Decimal, Decimal, CurrencyType, date]:
     """
     with Session(db.engine) as session:
         today, yesterday = session.query(Account).order_by(desc(Account.date)).limit(2)
-        return (today.currency, yesterday.currency, today.currency_type, today.date)
+        # 确保返回的类型与 AccountData 的定义一致
+        return (float(today.currency), float(yesterday.currency), today.currency_type, today.date)
 
 
 @streamlit.cache_data
-def get_current_ticker() -> tuple[Decimal, Decimal, Literal[CurrencyType.USD], date]:
+def get_current_ticker() -> Tuple[float, float, CurrencyType, date]: # 修改返回类型提示
     """获取财富部分中股票总值
 
     Returns:
-        tuple[Decimal, Decimal, Literal[CurrencyType.USD], date]:
+        Tuple[float, float, CurrencyType, date]: # 修改返回类型提示
             - 今天的股票总值
             - 昨天的财富总值
             - 货币计价类型
@@ -64,7 +67,8 @@ def get_current_ticker() -> tuple[Decimal, Decimal, Literal[CurrencyType.USD], d
         [i[0] for i in calculate_each_day_ticker_price(current_date)]
     )
     yesterday_value = sum([i[0] for i in calculate_each_day_ticker_price(yesterday)])
-    return (current_date_value, yesterday_value, CurrencyType.USD, current_date)
+    # 确保返回的类型与 TickerData 的定义一致
+    return (float(current_date_value), float(yesterday_value), CurrencyType.USD, current_date)
 
 
 @streamlit.cache_data
