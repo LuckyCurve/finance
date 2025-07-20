@@ -21,18 +21,22 @@ def _render_title() -> None:
     streamlit.title(":rainbow[未来财富预测]")
 
 
-def _get_user_inputs(all_ticker_names: List[str]) -> Tuple[List[str], int, int]:
+def _get_user_inputs(
+    all_ticker_names: List[str],
+) -> Tuple[List[str], int, int, float, float]:
     """
-    获取用户输入，包括非股票资产过滤、投资时间、每月投资金额。
+    获取用户输入，包括非股票资产过滤、投资时间、每月投资金额、平均回报率和标准差。
 
     Args:
         all_ticker_names (List[str]): 所有股票名称列表。
 
     Returns:
-        Tuple[List[str], int, int]:
+        Tuple[List[str], int, int, float, float]:
             - filtered_ticker_names: 用户选择的要包含在计算中的股票名称列表。
             - years: 用户选择的投资时间（年）。
             - monthly_contribution: 用户选择的每月投资金额。
+            - mean_return: 用户选择的每月平均回报率。
+            - std_return: 用户选择的每月回报率的标准差。
     """
     # 允许用户过滤掉非股票资产，选择不参与模拟的股票
     filter_out_names = streamlit.segmented_control(
@@ -45,8 +49,13 @@ def _get_user_inputs(all_ticker_names: List[str]) -> Tuple[List[str], int, int]:
     years = streamlit.slider("投资时间", 0, 50)
     # 获取用户输入的每月投资金额
     monthly_contribution = streamlit.slider("每月投资金额", 0, 50000, step=100)
+    # 添加高级选项以配置蒙特卡洛模拟参数
+    with streamlit.expander("高级选项"):
+        # 默认值基于年化8%回报率和18%标准差
+        mean_return = streamlit.slider("月度平均回报率", -0.2, 0.2, 0.08, 0.01, "%.2f")
+        std_return = streamlit.slider("月度回报率标准差", 0.0, 0.4, 0.18, 0.01, "%.2f")
 
-    return filtered_ticker_names, years, monthly_contribution
+    return filtered_ticker_names, years, monthly_contribution, mean_return, std_return
 
 
 def _display_initial_investment(initial_value: float) -> None:
@@ -82,16 +91,20 @@ def future_wealth_prediction() -> None:
 
     # 2. 用户输入阶段
     # 获取用户关于过滤、投资时间、每月投资金额的输入
-    filtered_ticker_names, years, monthly_contribution = _get_user_inputs(
-        all_ticker_names
-    )
+    (
+        filtered_ticker_names,
+        years,
+        monthly_contribution,
+        mean_return,
+        std_return,
+    ) = _get_user_inputs(all_ticker_names)
 
     # 3. 数据计算阶段
     # 根据用户过滤后的股票计算初始投资金额
     initial_value = calculate_initial_investment(ticker_data, filtered_ticker_names)
     # 执行蒙特卡洛模拟
     simulation_df = perform_monte_carlo_simulation(
-        initial_value, years, monthly_contribution
+        initial_value, years, monthly_contribution, mean_return, std_return
     )
 
     # 4. UI展示阶段

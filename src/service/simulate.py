@@ -6,11 +6,13 @@ from pandas import DataFrame
 # 进行预测
 
 
-def monte_carlo_simulation(initial_wealth, years, month_contribution) -> DataFrame:
+def monte_carlo_simulation(
+    initial_wealth, years, month_contribution, mean_return, std_return
+) -> DataFrame:
     # 参数
     # 特别注意: 是投资回报率符合正态分布, 不是 (1 + 投资回报率) 符合正态分布
-    mean_return = 1.08 ** (1 / 12) - 1
-    std_return = 0.18 / sqrt(12)
+    mean_return = (1 + mean_return) ** (1 / 12) - 1
+    std_return = std_return / sqrt(12)
     simulations = 100_000
 
     # 生成所有模拟的每月收益率 (simulations, months)

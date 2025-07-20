@@ -56,7 +56,11 @@ def calculate_initial_investment(
 
 
 def perform_monte_carlo_simulation(
-    initial_value: float, years: int, monthly_contribution: int
+    initial_value: float,
+    years: int,
+    monthly_contribution: int,
+    mean_return: float,
+    std_return: float,
 ) -> pd.DataFrame:
     """
     执行蒙特卡洛模拟以预测未来财富。
@@ -65,12 +69,14 @@ def perform_monte_carlo_simulation(
         initial_value (float): 初始投资金额。
         years (int): 投资年限。
         monthly_contribution (int): 每月投资金额。
+        mean_return (float): 每月平均回报率。
+        std_return (float): 每月回报率的标准差。
 
     Returns:
         pd.DataFrame: 模拟结果的DataFrame，包含财富随时间的变化。
     """
     # 调用蒙特卡洛模拟服务
     simulation_result_df = monte_carlo_simulation(
-        initial_value, years, monthly_contribution
+        initial_value, years, monthly_contribution, mean_return, std_return
     )
     return simulation_result_df
