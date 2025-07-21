@@ -9,6 +9,7 @@ from typing import Dict
 
 import pandas as pd
 
+from pages.components.charts import create_historical_exchange_rate_chart
 from service.exchange_rate_service import (
     convert_currency,
     fetch_historical_exchange_rates,
@@ -34,17 +35,6 @@ def _display_latest_exchange_rates(
     streamlit.subheader(f"最新汇率数据 - {current_date.strftime('%Y-%m-%d')}")
     for currency, rate in exchange_rates.items():
         streamlit.write(f"1 USD = {rate:.2f} {currency}")
-
-
-def _display_historical_exchange_rates(exchange_rate_df: pd.DataFrame) -> None:
-    """
-    显示历史汇率变化图表。
-
-    Args:
-        exchange_rate_df (pd.DataFrame): 包含历史汇率的DataFrame。
-    """
-    streamlit.subheader("历史汇率变化")
-    streamlit.line_chart(exchange_rate_df, x="日期", y="汇率", color="货币类型")
 
 
 def _render_currency_converter(exchange_rates: Dict[str, float]) -> None:
@@ -86,7 +76,7 @@ def exchange_rate_dashboard() -> None:
     # 添加分隔线
     streamlit.markdown("---")
     # 显示历史汇率图表
-    _display_historical_exchange_rates(historical_exchange_rates_df)
+    create_historical_exchange_rate_chart(historical_exchange_rates_df)
     # 添加分隔线
     streamlit.markdown("---")
     # 渲染货币换算工具

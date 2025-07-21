@@ -126,7 +126,7 @@ wheels = [
 
 [[package]]
 name = "akshare"
-version = "1.17.24"
+version = "1.17.25"
 source = { registry = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -147,9 +147,9 @@ dependencies = [
     { name = "urllib3" },
     { name = "xlrd" },
 ]
-sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/5c/67/f78cc3a8f1656d8999dd9f152d5631bab0836909799757a129b1c1f90d58/akshare-1.17.24.tar.gz", hash = "sha256:8d3103b7ec7febf3ef71deba589d2cefea89ca43a21286b5afbb57db20abc291", size = 839794 }
+sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/14/40/bcd4da46ffb6ba2847ea3a912351b1e37bcd1cf360700130d6eaa3528ede/akshare-1.17.25.tar.gz", hash = "sha256:475f69187743b876ad21d9967a45990fad6ab4a628138e5ccac61790ccf48133", size = 839882 }
 wheels = [
-    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/99/20/5349eed9f17f7d655b7af0eb29a829257664d80fd9a9ce837405932f43fe/akshare-1.17.24-py3-none-any.whl", hash = "sha256:c5e22f45f51a03428c904db4d437e2efcf09a3905ce4446d0299327ccb800a8c", size = 1054071 },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/36/83/4653ea843d499b1686c42ce9f1a79f2952640140f050d09b662d863041ea/akshare-1.17.25-py3-none-any.whl", hash = "sha256:5ab4feff0466ff0990d8ac76d977f931bbbc5df7eae1092a35ff3da9672cab2e", size = 1054129 },
 ]
 
 [[package]]
@@ -934,11 +934,11 @@ wheels = [
 
 [[package]]
 name = "narwhals"
-version = "1.47.1"
+version = "1.48.0"
 source = { registry = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple" }
-sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/fa/97/f9072f2dd368e52a37c0f5578f5910c689d5ac9c1108f8d2ed6c84c1c8fc/narwhals-1.47.1.tar.gz", hash = "sha256:3e477a54984a141b500ebd65d0b946b7a991080939b4a3321a6b01ea97258c9a", size = 516244 }
+sdist = { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/fc/cd/7395d6c247e821cba6243e9f7ed202fae3fefef643c96581b5ecab927bad/narwhals-1.48.0.tar.gz", hash = "sha256:7243b456cbdb60edb148731a8f9b203f473a373a249ad66c699362508730e63f", size = 515112 }
 wheels = [
-    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/c0/15/278693412221859a0159719878e51a79812a189edceef2fe325160a8e661/narwhals-1.47.1-py3-none-any.whl", hash = "sha256:b9f2b2557aba054231361a00f6fcabc5017e338575e810e82155eb34e38ace93", size = 375506 },
+    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/packages/75/72/5406044d4c251f3d8f78cec05b74839d0332d34c9e94b59120f3697ecf48/narwhals-1.48.0-py3-none-any.whl", hash = "sha256:2bbddc3adeed0c5b15ead8fe61f1d5e459f00c1d2fa60921e52a0f9bdc06077d", size = 376866 },
 ]
 
 [[package]]

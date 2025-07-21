@@ -15,7 +15,9 @@ from pages.utils.common import get_pie_tooltip_formatter
 
 
 def create_sunburst_chart(
-    current_ticker_value: float, ticker_daily_price_df: pd.DataFrame, current_currencies: list
+    current_ticker_value: float,
+    ticker_daily_price_df: pd.DataFrame,
+    current_currencies: list,
 ):
     """Creates and displays the asset allocation sunburst chart."""
     # current_currency = get_current_currencies() # 移除内部调用
@@ -33,7 +35,9 @@ def create_sunburst_chart(
         },
         {
             "name": "现金",
-            "value": sum(v for _, v in current_currencies), # 使用传入的 current_currencies
+            "value": sum(
+                v for _, v in current_currencies
+            ),  # 使用传入的 current_currencies
             "children": [
                 {"name": currency_type, "value": round(value, 2)}
                 for currency_type, value in current_currencies
@@ -86,7 +90,9 @@ def create_sunburst_chart(
     components.html(sunburst_chart, height=600)
 
 
-def create_total_assets_line_chart(account_change_df: pd.DataFrame, currency_symbol: str):
+def create_total_assets_line_chart(
+    account_change_df: pd.DataFrame, currency_symbol: str
+):
     """Creates and displays the daily total asset change line chart."""
     # account_change_df = calculate_account_change() # 移除内部调用
     account_change_df["Date"] = pd.to_datetime(account_change_df["Date"])
@@ -104,13 +110,25 @@ def create_total_assets_line_chart(account_change_df: pd.DataFrame, currency_sym
         .add_yaxis(
             series_name="总财富",
             y_axis=account_change_df["Currency"].tolist(),
+            label_opts=opts.LabelOpts(is_show=False),
             markpoint_opts=opts.MarkPointOpts(
-                data=[opts.MarkPointItem(type_="max"), opts.MarkPointItem(type_="min")]
+                data=[
+                    opts.MarkPointItem(
+                        type_="max",
+                        name="最大值",
+                        itemstyle_opts=opts.ItemStyleOpts(color="#d94e5d"),
+                    ),
+                    opts.MarkPointItem(
+                        type_="min",
+                        name="最小值",
+                        itemstyle_opts=opts.ItemStyleOpts(color="#50a3ba"),
+                    ),
+                ]
             ),
             markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")]),
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(title="每日总资产变化", subtitle=f"单位: {currency_symbol}"), # 动态单位
+            title_opts=opts.TitleOpts(title="每日总资产变化"),  # 动态单位
             tooltip_opts=opts.TooltipOpts(trigger="axis"),
             datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
             xaxis_opts=opts.AxisOpts(name="日期"),
@@ -121,7 +139,9 @@ def create_total_assets_line_chart(account_change_df: pd.DataFrame, currency_sym
     components.html(line_chart, height=600)
 
 
-def create_stock_market_bar_chart(ticker_daily_price_df: pd.DataFrame, currency_symbol: str):
+def create_stock_market_bar_chart(
+    ticker_daily_price_df: pd.DataFrame, currency_symbol: str
+):
     """Creates and displays the daily stock market value bar chart."""
     bar_chart = (
         Bar(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
@@ -132,7 +152,7 @@ def create_stock_market_bar_chart(ticker_daily_price_df: pd.DataFrame, currency_
             .tolist()
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(title="每日股票市值", subtitle=f"单位: {currency_symbol}"), # 动态单位
+            title_opts=opts.TitleOpts(title="每日股票市值"),  # 动态单位
             tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="shadow"),
             datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
             xaxis_opts=opts.AxisOpts(name="日期"),
@@ -185,7 +205,7 @@ def create_daily_change_line_chart(daily_change_df: pd.DataFrame, currency_symbo
             xaxis_data=daily_change_df["Date"].dt.strftime("%Y-%m-%d").unique().tolist()
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(title="每日个股涨跌", subtitle=f"单位: {currency_symbol}"), # 动态单位
+            title_opts=opts.TitleOpts(title="每日个股涨跌"),  # 动态单位
             tooltip_opts=opts.TooltipOpts(trigger="axis"),
             datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
             xaxis_opts=opts.AxisOpts(name="日期"),
@@ -200,3 +220,48 @@ def create_daily_change_line_chart(daily_change_df: pd.DataFrame, currency_symbo
             label_opts=opts.LabelOpts(is_show=False),
         )
     components.html(line_daily_change.render_embed(), height=600)
+
+
+def create_historical_exchange_rate_chart(exchange_rate_df: pd.DataFrame):
+    """Creates and displays the historical exchange rate line chart."""
+    exchange_rate_df["日期"] = pd.to_datetime(exchange_rate_df["日期"])
+    line_chart = (
+        Line(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
+        .add_xaxis(
+            xaxis_data=exchange_rate_df["日期"]
+            .dt.strftime("%Y-%m-%d")
+            .unique()
+            .tolist()
+        )
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="历史汇率变化"),
+            tooltip_opts=opts.TooltipOpts(trigger="axis"),
+            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
+            xaxis_opts=opts.AxisOpts(name="日期"),
+            yaxis_opts=opts.AxisOpts(name="汇率"),
+        )
+    )
+
+    for currency in exchange_rate_df["货币类型"].unique():
+        currency_df = exchange_rate_df[exchange_rate_df["货币类型"] == currency]
+        line_chart.add_yaxis(
+            series_name=currency,
+            y_axis=currency_df["汇率"].tolist(),
+            label_opts=opts.LabelOpts(is_show=False),
+            markpoint_opts=opts.MarkPointOpts(
+                data=[
+                    opts.MarkPointItem(
+                        type_="max",
+                        name="最大值",
+                        itemstyle_opts=opts.ItemStyleOpts(color="#d94e5d"),
+                    ),
+                    opts.MarkPointItem(
+                        type_="min",
+                        name="最小值",
+                        itemstyle_opts=opts.ItemStyleOpts(color="#50a3ba"),
+                    ),
+                ]
+            ),
+        )
+
+    components.html(line_chart.render_embed(), height=600)
