@@ -6,7 +6,7 @@
 		{
 			"label": "run streamlit",
 			"type": "shell",
-			"command": "streamlit run ./src/main.py",
+			"command": "uv run streamlit run ./src/main.py",
 			"problemMatcher": []
 		},
 		{

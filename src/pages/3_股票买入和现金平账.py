@@ -6,8 +6,10 @@
 import datetime
 
 import streamlit as st
+from sqlalchemy.orm import Session
 
-from db.entity import CurrencyType
+import db
+from db.entity import Config, CurrencyType
 from service.transaction_management import (
     process_currency_adjustment,
     process_stock_purchase,
@@ -17,6 +19,16 @@ from service.transaction_management import (
 def _render_title() -> None:
     """渲染页面标题。"""
     st.title("✍️ 股票买入和现金平账")
+
+
+def _clear_cache_and_config() -> None:
+    """清空所有缓存和数据库配置。"""
+    with Session(db.engine) as session:
+        session.query(Config).delete()
+        session.commit()
+    st.cache_data.clear()
+    st.cache_resource.clear()
+    st.success("缓存和数据库配置已清空")
 
 
 def _render_stock_purchase_form() -> None:
@@ -32,6 +44,7 @@ def _render_stock_purchase_form() -> None:
             success, message = process_stock_purchase(symbol, trans_date, shares, price)
             if success:
                 st.success(message)
+                _clear_cache_and_config()
             else:
                 st.error(message)
 
@@ -51,6 +64,7 @@ def _render_currency_adjustment_form() -> None:
             )
             if success:
                 st.success(message)
+                _clear_cache_and_config()
             else:
                 st.error(message)
 
