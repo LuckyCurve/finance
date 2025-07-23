@@ -52,8 +52,8 @@ def _get_user_inputs(
     # 添加高级选项以配置蒙特卡洛模拟参数
     with streamlit.expander("高级选项"):
         # 默认值基于年化8%回报率和18%标准差
-        mean_return = streamlit.slider("月度平均回报率", -0.2, 0.2, 0.08, 0.01, "%.2f")
-        std_return = streamlit.slider("月度回报率标准差", 0.0, 0.4, 0.18, 0.01, "%.2f")
+        mean_return = streamlit.slider("年度平均回报率", -0.2, 0.2, 0.08, 0.01, "%.2f")
+        std_return = streamlit.slider("年度回报率标准差", 0.0, 0.4, 0.18, 0.01, "%.2f")
 
     return filtered_ticker_names, years, monthly_contribution, mean_return, std_return
 

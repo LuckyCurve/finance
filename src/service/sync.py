@@ -5,7 +5,6 @@ import datetime
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Dict, List
 
 import pandas as pd
 from sqlalchemy import asc, func, select
@@ -112,7 +111,7 @@ def sync_account() -> None:
 
 
 def _calculate_currency_each_daily_account(
-    each_date: date, session: Session, exchange_rates_map: Dict[CurrencyType, Decimal]
+    each_date: date, session: Session, exchange_rates_map: dict[CurrencyType, Decimal]
 ) -> Decimal:
     currency_assets = (
         session.query(CurrencyAsset).filter(CurrencyAsset.date == each_date).all()
@@ -122,14 +121,16 @@ def _calculate_currency_each_daily_account(
     for currency_asset in currency_assets:
         exchange_rate = Decimal(1)
         if not currency_asset.currency_type == CurrencyType.USD:
-            exchange_rate = exchange_rates_map.get(currency_asset.currency_type, Decimal(1))
+            exchange_rate = exchange_rates_map.get(
+                currency_asset.currency_type, Decimal(1)
+            )
         res += currency_asset.currency / exchange_rate
 
     return res
 
 
 def _calculate_stock_each_daily_account(
-    each_date: date, session: Session, exchange_rates_map: Dict[CurrencyType, Decimal]
+    each_date: date, session: Session, exchange_rates_map: dict[CurrencyType, Decimal]
 ) -> Decimal:
     stock_assets = session.query(StockAsset).filter(StockAsset.date == each_date).all()
     res = Decimal(0)
@@ -139,7 +140,9 @@ def _calculate_stock_each_daily_account(
 
         exchange_rate = Decimal(1)
         if current_date.currency_type != CurrencyType.USD:
-            exchange_rate = exchange_rates_map.get(current_date.currency_type, Decimal(1))
+            exchange_rate = exchange_rates_map.get(
+                current_date.currency_type, Decimal(1)
+            )
         res += current_date.currency * stock.shares / exchange_rate
 
     return res
@@ -182,17 +185,21 @@ def _sync_currency_asset(session: Session) -> None:
 
     # 创建一个完整的日期范围
     full_date_range = pd.date_range(
-        start=df["date"].min(), end=date.today()
+        start=df["date"].min(), end=date.today() - timedelta(1)
     )
 
     # 对每个货币类型进行处理
     all_assets = []
     for currency_type in df["currency_type"].unique():
         currency_df = df[df["currency_type"] == currency_type].copy()
-        
+
         # 按日期分组并求和，得到每日净变动
-        daily_changes = currency_df.groupby("date")["amount"].sum().reindex(full_date_range, fill_value=0)
-        
+        daily_changes = (
+            currency_df.groupby("date")["amount"]
+            .sum()
+            .reindex(full_date_range, fill_value=0)
+        )
+
         # 计算累积和得到每日资产
         daily_assets = daily_changes.cumsum()
 
@@ -200,7 +207,9 @@ def _sync_currency_asset(session: Session) -> None:
         for d, amount in daily_assets.items():
             all_assets.append(
                 CurrencyAsset(
-                    date=d.date(), currency=Decimal(str(amount)), currency_type=currency_type
+                    date=d.date(),
+                    currency=Decimal(str(amount)),
+                    currency_type=currency_type,
                 )
             )
     session.add_all(all_assets)
@@ -239,7 +248,7 @@ def _sync_stock_asset(session: Session) -> None:
             weighted_price = (x["shares"] * x["price"]).sum() / shares_sum
         else:
             weighted_price = Decimal(0)
-        
+
         # Determine the effective transaction type for the day.
         # If there are both buys and sells, this logic might need refinement
         # based on desired behavior. For now, we'll just take the first one.
@@ -253,39 +262,57 @@ def _sync_stock_asset(session: Session) -> None:
             }
         )
 
-    aggregated_df = df.groupby(["date", "ticker"]).apply(aggregate_transactions, include_groups=False).reset_index()
+    aggregated_df = (
+        df.groupby(["date", "ticker"])
+        .apply(aggregate_transactions, include_groups=False)
+        .reset_index()
+    )
 
-    full_date_range = pd.date_range(start=df["date"].min(), end=date.today())
+    full_date_range = pd.date_range(
+        start=df["date"].min(), end=date.today() - timedelta(1)
+    )
 
     all_assets = []
     for ticker_symbol in aggregated_df["ticker"].unique():
         ticker_df = aggregated_df[aggregated_df["ticker"] == ticker_symbol].copy()
 
         # 确保所有日期都在 full_date_range 中，并填充缺失日期
-        ticker_df = ticker_df.set_index("date").reindex(full_date_range, fill_value=0).reset_index()
+        ticker_df = (
+            ticker_df.set_index("date")
+            .reindex(full_date_range, fill_value=0)
+            .reset_index()
+        )
         ticker_df = ticker_df.rename(columns={"index": "date"})
-        ticker_df["shares_change"] = ticker_df["shares_change"].astype(str).apply(Decimal)
-        ticker_df["weighted_price"] = ticker_df["weighted_price"].astype(str).apply(Decimal)
+        ticker_df["shares_change"] = (
+            ticker_df["shares_change"].astype(str).apply(Decimal)
+        )
+        ticker_df["weighted_price"] = (
+            ticker_df["weighted_price"].astype(str).apply(Decimal)
+        )
 
         # 初始化每日持股数量和成本
         current_shares = Decimal(0)
         current_cost = Decimal(0)
 
         for _, row in ticker_df.iterrows():
-            if row["shares_change"] == 0:  # 如果是缺失日期或无交易，则沿用前一天的资产状态
+            if (
+                row["shares_change"] == 0
+            ):  # 如果是缺失日期或无交易，则沿用前一天的资产状态
                 pass
             else:
                 shares_change = row["shares_change"]
                 price = row["weighted_price"]
 
-                if shares_change > 0: # Buy transaction
+                if shares_change > 0:  # Buy transaction
                     new_total_shares = current_shares + shares_change
                     if new_total_shares != 0:
-                        current_cost = (current_cost * current_shares + price * shares_change) / new_total_shares
+                        current_cost = (
+                            current_cost * current_shares + price * shares_change
+                        ) / new_total_shares
                     else:
                         current_cost = Decimal(0)
                     current_shares = new_total_shares
-                else: # Sell transaction
+                else:  # Sell transaction
                     shares_to_sell = -shares_change
                     if current_shares < shares_to_sell:
                         raise Exception(
