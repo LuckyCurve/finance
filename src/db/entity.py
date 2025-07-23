@@ -1,6 +1,5 @@
 import datetime
 import enum
-from collections import namedtuple
 from decimal import Decimal
 from typing import NamedTuple
 
@@ -9,17 +8,19 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from db.common import Base, DecimalAsString
 
+
 # 定义用于数据传输的NamedTuple
 class AccountData(NamedTuple):
     total_value: float
     yesterday_value: float
-    currency_type: 'CurrencyType'
+    currency_type: "CurrencyType"
     update_time: datetime.datetime
+
 
 class TickerData(NamedTuple):
     total_value: float
     yesterday_value: float
-    currency_type: 'CurrencyType'
+    currency_type: "CurrencyType"
     update_time: datetime.datetime
 
 
