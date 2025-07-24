@@ -9,7 +9,6 @@ from typing import List, Tuple
 
 import pandas as pd
 
-from db.entity import CurrencyType
 from service.calculate import calculate_each_day_ticker_price
 from service.simulate import monte_carlo_simulation
 

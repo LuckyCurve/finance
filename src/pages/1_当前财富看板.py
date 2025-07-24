@@ -4,8 +4,6 @@ displaying current wealth, stock data, asset allocation, and transaction details
 It includes functionality to switch between different currency views for wealth and stock metrics.
 """
 
-from typing import Tuple
-
 import pandas as pd
 import streamlit
 
@@ -22,10 +20,12 @@ from pages.components.metrics import display_finance_metrics
 from service.calculate import (
     calculate_account_change,
     calculate_ticker_daily_change,
-    calculate_ticker_daily_price,
     calculate_ticker_daily_total_earn_rate,
 )
-from service.dashboard_data import fetch_initial_dashboard_data, get_converted_financial_data
+from service.dashboard_data import (
+    fetch_initial_dashboard_data,
+    get_converted_financial_data,
+)
 
 
 def _render_title() -> None:
@@ -74,7 +74,9 @@ def _display_dashboard_charts(
     streamlit.write("\n")  # 添加一些垂直间距
 
     # 创建并显示资产配置旭日图
-    create_sunburst_chart(current_ticker_value, ticker_daily_price_df, current_currencies)
+    create_sunburst_chart(
+        current_ticker_value, ticker_daily_price_df, current_currencies
+    )
     # 创建并显示总资产折线图
     create_total_assets_line_chart(account_change_df, currency_symbol)
     # 创建并显示股票市值柱状图

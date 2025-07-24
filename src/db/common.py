@@ -32,5 +32,8 @@ class Base(DeclarativeBase):
         DateTime, server_default=func.now(), comment="创建时间，由数据库插入时间指定"
     )
     update_time: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.now, onupdate=datetime.now, comment="更新时间，默认由程序生成"
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+        comment="更新时间，默认由程序生成",
     )

@@ -35,7 +35,6 @@ from db.entity import (
     Transaction,
     TransactionType,
 )
-from service.ticker import get_ticker_close_price
 from utils.timing import timing_decorator
 
 LAST_SYNC_DATE = "last_sync_date"
@@ -94,7 +93,7 @@ def _update_sync_status(session: Session) -> None:
         # 如果配置项不存在，则创建一个新的
         sync_config = Config(key=LAST_SYNC_DATE)
         session.add(sync_config)
-    
+
     sync_config.value = date.today().strftime(DATE_FORMAT)
     session.commit()
 
@@ -212,7 +211,9 @@ def _group_by_date(items: list) -> dict[date, list]:
     return grouped
 
 
-def _group_ticker_prices(ticker_infos: list[TickerInfo]) -> dict[date, dict[str, TickerInfo]]:
+def _group_ticker_prices(
+    ticker_infos: list[TickerInfo],
+) -> dict[date, dict[str, TickerInfo]]:
     """将股票价格信息按日期和股票代码两级分组。"""
     grouped = {}
     for info in ticker_infos:
@@ -381,7 +382,9 @@ def _sync_stock_asset(session: Session) -> list[StockAsset]:
 
             if shares_change != 0:
                 # 计算新的总成本和总股数
-                new_total_cost = (current_cost * current_shares) + (price * shares_change)
+                new_total_cost = (current_cost * current_shares) + (
+                    price * shares_change
+                )
                 new_total_shares = current_shares + shares_change
 
                 # 更新持仓和成本价
@@ -409,7 +412,9 @@ def sync_exchange_rate() -> None:
     """
     with Session(engine) as session:
         # 1. 确定需要同步汇率的日期范围
-        first_transaction = session.query(Transaction).order_by(asc(Transaction.date)).first()
+        first_transaction = (
+            session.query(Transaction).order_by(asc(Transaction.date)).first()
+        )
         if not first_transaction:
             print("警告: 交易记录为空，无法确定同步汇率的起始日期。")
             return
@@ -499,7 +504,7 @@ def _get_ticker_data_to_fetch(session: Session) -> list[tuple[str, date, TickerS
 
 
 def _fetch_and_process_ticker_histories(
-    ticker_data_to_fetch: list[tuple[str, date, TickerSymbol]]
+    ticker_data_to_fetch: list[tuple[str, date, TickerSymbol]],
 ) -> list[TickerInfo]:
     """并发获取并处理所有股票的历史价格。"""
     all_ticker_infos = []
@@ -530,9 +535,7 @@ def _fetch_single_ticker_history(
         else get_hk_ticker_history
     )
     currency_type = (
-        CurrencyType.USD
-        if symbol.ticker_type == TickerType.USD
-        else CurrencyType.HKD
+        CurrencyType.USD if symbol.ticker_type == TickerType.USD else CurrencyType.HKD
     )
 
     try:
@@ -636,7 +639,7 @@ def _sync_ticker_symbols(ticker_type: TickerType, fetch_symbols_func: callable) 
             TickerSymbol(symbol=symbol, name=name, ticker_type=ticker_type)
             for (name, symbol) in fetch_symbols_func()
         ]
-        
+
         if symbols_to_add:
             session.add_all(symbols_to_add)
             session.commit()

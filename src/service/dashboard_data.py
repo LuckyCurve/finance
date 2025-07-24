@@ -18,7 +18,9 @@ from pages.utils.common import convert_value
 from service.calculate import calculate_ticker_daily_price
 
 
-def fetch_initial_dashboard_data() -> Tuple[AccountData, TickerData, pd.DataFrame, pd.DataFrame]:
+def fetch_initial_dashboard_data() -> (
+    Tuple[AccountData, TickerData, pd.DataFrame, pd.DataFrame]
+):
     """
     获取当前财富看板所需的初始数据。
     包括当前账户信息、当前股票信息、股票每日价格数据以及汇率详情。
@@ -57,23 +59,23 @@ def fetch_initial_dashboard_data() -> Tuple[AccountData, TickerData, pd.DataFram
 
 
 def _convert_financial_data_tuple(
-    data_tuple: NamedTuple, # Changed to NamedTuple
+    data_tuple: NamedTuple,  # Changed to NamedTuple
     selected_currency_type: CurrencyType,
     exchange_rates_df: pd.DataFrame,
-    data_type: type, # AccountData or TickerData
+    data_type: type,  # AccountData or TickerData
 ) -> NamedTuple:
     """
     辅助函数，用于转换财务数据元组为指定的数据类型（AccountData或TickerData）。
     """
     converted_value = convert_value(
-        float(data_tuple.total_value), # Access by attribute
-        data_tuple.currency_type, # Access by attribute
+        float(data_tuple.total_value),  # Access by attribute
+        data_tuple.currency_type,  # Access by attribute
         selected_currency_type,
         exchange_rates_df,
     )
     converted_yesterday_value = convert_value(
-        float(data_tuple.yesterday_value), # Access by attribute
-        data_tuple.currency_type, # Access by attribute
+        float(data_tuple.yesterday_value),  # Access by attribute
+        data_tuple.currency_type,  # Access by attribute
         selected_currency_type,
         exchange_rates_df,
     )
@@ -81,7 +83,7 @@ def _convert_financial_data_tuple(
         total_value=converted_value,
         yesterday_value=converted_yesterday_value,
         currency_type=selected_currency_type,
-        update_time=data_tuple.update_time, # Access by attribute
+        update_time=data_tuple.update_time,  # Access by attribute
     )
 
 

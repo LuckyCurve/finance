@@ -1,7 +1,7 @@
 # 完成首页的数据展示
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import List, Literal, Tuple
+from typing import List, Tuple
 
 import pandas as pd
 import streamlit
@@ -12,13 +12,11 @@ from sqlalchemy.orm import Session
 import db
 from db.entity import (
     Account,
-    AccountData, # 导入 AccountData
     CurrencyAsset,
     CurrencyTransaction,
     CurrencyType,
     ExchangedRate,
     StockTransaction,
-    TickerData, # 导入 TickerData
     TransactionType,
 )
 from service.calculate import calculate_each_day_ticker_price
@@ -34,7 +32,9 @@ def format_decimal(data) -> str:
 
 
 @streamlit.cache_data
-def get_current_account() -> Tuple[float, float, CurrencyType, date]: # 修改返回类型提示
+def get_current_account() -> (
+    Tuple[float, float, CurrencyType, date]
+):  # 修改返回类型提示
     """获取相应的财富总值
 
     Returns:
@@ -47,11 +47,16 @@ def get_current_account() -> Tuple[float, float, CurrencyType, date]: # 修改�
     with Session(db.engine) as session:
         today, yesterday = session.query(Account).order_by(desc(Account.date)).limit(2)
         # 确保返回的类型与 AccountData 的定义一致
-        return (float(today.currency), float(yesterday.currency), today.currency_type, today.date)
+        return (
+            float(today.currency),
+            float(yesterday.currency),
+            today.currency_type,
+            today.date,
+        )
 
 
 @streamlit.cache_data
-def get_current_ticker() -> Tuple[float, float, CurrencyType, date]: # 修改返回类型提示
+def get_current_ticker() -> Tuple[float, float, CurrencyType, date]:  # 修改返回类型提示
     """获取财富部分中股票总值
 
     Returns:
@@ -68,7 +73,12 @@ def get_current_ticker() -> Tuple[float, float, CurrencyType, date]: # 修改返
     )
     yesterday_value = sum([i[0] for i in calculate_each_day_ticker_price(yesterday)])
     # 确保返回的类型与 TickerData 的定义一致
-    return (float(current_date_value), float(yesterday_value), CurrencyType.USD, current_date)
+    return (
+        float(current_date_value),
+        float(yesterday_value),
+        CurrencyType.USD,
+        current_date,
+    )
 
 
 @streamlit.cache_data

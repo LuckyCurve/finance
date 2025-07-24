@@ -7,7 +7,6 @@ import streamlit
 from datetime import date
 from typing import Dict
 
-import pandas as pd
 
 from pages.components.charts import create_historical_exchange_rate_chart
 from service.exchange_rate_service import (
@@ -53,8 +52,12 @@ def _render_currency_converter(exchange_rates: Dict[str, float]) -> None:
     to_currency = streamlit.selectbox("转换为哪种货币", options=currency_options)
 
     # 执行转换并显示结果
-    converted_amount = convert_currency(amount, from_currency, to_currency, exchange_rates)
-    streamlit.success(f"{amount} {from_currency} = {converted_amount:.2f} {to_currency}")
+    converted_amount = convert_currency(
+        amount, from_currency, to_currency, exchange_rates
+    )
+    streamlit.success(
+        f"{amount} {from_currency} = {converted_amount:.2f} {to_currency}"
+    )
 
 
 def exchange_rate_dashboard() -> None:
