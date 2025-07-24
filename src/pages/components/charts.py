@@ -24,24 +24,26 @@ def create_sunburst_chart(
     ticker_data = ticker_daily_price_df[
         ticker_daily_price_df["Date"].dt.date == datetime.date.today() - timedelta(1)
     ]
+    # Prepare children data first
+    stock_children = [
+        {"name": row["Ticker"], "value": round(row["Price"], 2)}
+        for _, row in ticker_data.iterrows()
+    ]
+    cash_children = [
+        {"name": currency_type, "value": round(value, 2)}
+        for currency_type, value in current_currencies
+    ]
+
     sunburst_data = [
         {
             "name": "股市",
-            "value": round(float(current_ticker_value), 2),
-            "children": [
-                {"name": row["Ticker"], "value": round(row["Price"], 2)}
-                for _, row in ticker_data.iterrows()
-            ],
+            "value": sum(child["value"] for child in stock_children),
+            "children": stock_children,
         },
         {
             "name": "现金",
-            "value": sum(
-                v for _, v in current_currencies
-            ),  # 使用传入的 current_currencies
-            "children": [
-                {"name": currency_type, "value": round(value, 2)}
-                for currency_type, value in current_currencies
-            ],
+            "value": sum(child["value"] for child in cash_children),
+            "children": cash_children,
         },
     ]
     total_assets = sum(item.get("value", 0) for item in sunburst_data)
