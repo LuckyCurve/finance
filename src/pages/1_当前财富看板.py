@@ -33,7 +33,7 @@ def _render_title() -> None:
     streamlit.title(":rainbow[我的财富看板]")
 
 
-def _get_currency_selection(all_currencies: list) -> CurrencyType:
+def _get_currency_selection(all_currencies: list[str]) -> CurrencyType:
     """
     显示货币选择框并返回选定的货币类型。
 
@@ -56,7 +56,7 @@ def _display_dashboard_charts(
     account_change_df: pd.DataFrame,
     earn_rate_df: pd.DataFrame,
     daily_change_df: pd.DataFrame,
-    current_currencies: list,
+    current_currencies: list[tuple[str, float]],
     currency_symbol: str,
 ) -> None:
     """

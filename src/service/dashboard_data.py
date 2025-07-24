@@ -4,7 +4,7 @@
 确保展示层与数据层分离。
 """
 
-from typing import NamedTuple, Tuple
+from typing import Tuple
 
 import pandas as pd
 
@@ -59,11 +59,11 @@ def fetch_initial_dashboard_data() -> (
 
 
 def _convert_financial_data_tuple(
-    data_tuple: NamedTuple,  # Changed to NamedTuple
+    data_tuple: AccountData | TickerData,
     selected_currency_type: CurrencyType,
     exchange_rates_df: pd.DataFrame,
-    data_type: type,  # AccountData or TickerData
-) -> NamedTuple:
+    data_type: type[AccountData] | type[TickerData],
+) -> AccountData | TickerData:
     """
     辅助函数，用于转换财务数据元组为指定的数据类型（AccountData或TickerData）。
     """

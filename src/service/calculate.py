@@ -1,7 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
 import streamlit
-from typing import List, Tuple
 
 import pandas as pd
 from pandas import DataFrame
@@ -81,7 +80,7 @@ def calculate_ticker_daily_total_earn_rate() -> DataFrame:
 @streamlit.cache_data
 def calculate_each_day_ticker_total_earn_rate(
     each_date: date,
-) -> List[Tuple[Decimal, str]]:
+) -> list[tuple[Decimal, str]]:
     with Session(db.engine) as session:
         stock_assets = (
             session.query(StockAsset).filter(StockAsset.date == each_date).all()
@@ -102,7 +101,7 @@ def calculate_each_day_ticker_total_earn_rate(
 
 
 @streamlit.cache_data
-def calculate_each_day_ticker_price(each_date: date) -> List[Tuple[Decimal, str]]:
+def calculate_each_day_ticker_price(each_date: date) -> list[tuple[Decimal, str]]:
     with Session(db.engine) as session:
         stock_assets = (
             session.query(StockAsset).filter(StockAsset.date == each_date).all()
@@ -133,7 +132,7 @@ def calculate_each_day_ticker_price(each_date: date) -> List[Tuple[Decimal, str]
 
 
 @streamlit.cache_data
-def calculate_each_day_ticker_change(each_date: date) -> List[Tuple[Decimal, str]]:
+def calculate_each_day_ticker_change(each_date: date) -> list[tuple[Decimal, str]]:
     with Session(db.engine) as session:
         stock_assets = (
             session.query(StockAsset).filter(StockAsset.date == each_date).all()

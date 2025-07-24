@@ -5,7 +5,6 @@
 """
 
 from datetime import date, timedelta
-from typing import List, Tuple
 
 import pandas as pd
 
@@ -13,7 +12,7 @@ from service.calculate import calculate_each_day_ticker_price
 from service.simulate import monte_carlo_simulation
 
 
-def fetch_and_filter_ticker_data() -> Tuple[List[str], float]:
+def fetch_and_filter_ticker_data() -> tuple[list[str], list[tuple[float, str]]]:
     """
     获取并过滤股票数据，计算初始投资金额。
 
@@ -35,7 +34,7 @@ def fetch_and_filter_ticker_data() -> Tuple[List[str], float]:
 
 
 def calculate_initial_investment(
-    ticker_data: List[Tuple[float, str]], filtered_ticker_names: List[str]
+    ticker_data: list[tuple[float, str]], filtered_ticker_names: list[str]
 ) -> float:
     """
     根据过滤后的股票名称计算初始投资金额。

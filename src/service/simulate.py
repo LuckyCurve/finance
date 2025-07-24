@@ -7,7 +7,11 @@ from pandas import DataFrame
 
 
 def monte_carlo_simulation(
-    initial_wealth, years, month_contribution, mean_return, std_return
+    initial_wealth: float,
+    years: int,
+    month_contribution: float,
+    mean_return: float,
+    std_return: float,
 ) -> DataFrame:
     # 参数
     # 特别注意: 是投资回报率符合正态分布, 不是 (1 + 投资回报率) 符合正态分布

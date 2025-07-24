@@ -5,7 +5,6 @@
 """
 
 import datetime
-from typing import Tuple
 
 from db.entity import CurrencyType
 from service.adjust import adjust_currency
@@ -14,7 +13,7 @@ from service.transaction import buy_stock
 
 def process_stock_purchase(
     symbol: str, trans_date: datetime.date, shares: float, price: float
-) -> Tuple[bool, str]:
+) -> tuple[bool, str]:
     """
     处理股票买入操作。
 
@@ -42,7 +41,7 @@ def process_stock_purchase(
 
 def process_currency_adjustment(
     final_amount: float, currency_type: CurrencyType
-) -> Tuple[bool, str]:
+) -> tuple[bool, str]:
     """
     处理现金平账操作。
 

@@ -5,7 +5,6 @@
 
 import streamlit
 from datetime import date
-from typing import Dict
 
 
 from pages.components.charts import create_historical_exchange_rate_chart
@@ -22,7 +21,7 @@ def _render_title() -> None:
 
 
 def _display_latest_exchange_rates(
-    current_date: date, exchange_rates: Dict[str, float]
+    current_date: date, exchange_rates: dict[str, float]
 ) -> None:
     """
     显示最新的汇率数据。
@@ -36,7 +35,7 @@ def _display_latest_exchange_rates(
         streamlit.write(f"1 USD = {rate:.2f} {currency}")
 
 
-def _render_currency_converter(exchange_rates: Dict[str, float]) -> None:
+def _render_currency_converter(exchange_rates: dict[str, float]) -> None:
     """
     渲染货币换算工具并处理转换逻辑。
 

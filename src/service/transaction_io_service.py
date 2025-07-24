@@ -1,7 +1,6 @@
 import json
 import datetime
 from decimal import Decimal
-from typing import List
 
 from db.entity import (
     Transaction,
@@ -15,7 +14,7 @@ from db.entity import (
 
 class TransactionIOService:
     @staticmethod
-    def export_transactions(transactions: List[Transaction]) -> str:
+    def export_transactions(transactions: list[Transaction]) -> str:
         data = []
         for t in transactions:
             item = {
@@ -51,7 +50,7 @@ class TransactionIOService:
         return json.dumps(data, indent=4)
 
     @staticmethod
-    def import_transactions(json_input: str) -> List[Transaction]:
+    def import_transactions(json_input: str) -> list[Transaction]:
         data = json.loads(json_input)
         transactions = []
         for item in data:

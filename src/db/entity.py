@@ -9,18 +9,24 @@ from sqlalchemy.orm import Mapped, mapped_column
 from db.common import Base, DecimalAsString
 
 
+class CurrencyType(enum.Enum):
+    USD = "USD"
+    CNY = "CNY"
+    HKD = "HKD"
+
+
 # 定义用于数据传输的NamedTuple
 class AccountData(NamedTuple):
     total_value: float
     yesterday_value: float
-    currency_type: "CurrencyType"
+    currency_type: CurrencyType
     update_time: datetime.datetime
 
 
 class TickerData(NamedTuple):
     total_value: float
     yesterday_value: float
-    currency_type: "CurrencyType"
+    currency_type: CurrencyType
     update_time: datetime.datetime
 
 
@@ -29,12 +35,6 @@ class Config(Base):
 
     key: Mapped[str] = mapped_column(String, nullable=True)
     value: Mapped[str] = mapped_column(String, nullable=True)
-
-
-class CurrencyType(enum.Enum):
-    USD = "USD"
-    CNY = "CNY"
-    HKD = "HKD"
 
 
 class Account(Base):

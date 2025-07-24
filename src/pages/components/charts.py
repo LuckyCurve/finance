@@ -17,7 +17,7 @@ from pages.utils.common import get_pie_tooltip_formatter
 def create_sunburst_chart(
     current_ticker_value: float,
     ticker_daily_price_df: pd.DataFrame,
-    current_currencies: list,
+    current_currencies: list[tuple[str, float]],
 ):
     """Creates and displays the asset allocation sunburst chart."""
     # current_currency = get_current_currencies() # 移除内部调用

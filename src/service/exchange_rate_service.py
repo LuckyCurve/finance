@@ -5,7 +5,6 @@
 """
 
 from datetime import date
-from typing import Dict, Tuple
 
 import pandas as pd
 
@@ -13,7 +12,7 @@ from adaptor.inbound.show_data import get_exchange_rate_details
 from adaptor.outbound.currency import get_exchange_rate
 
 
-def fetch_latest_exchange_rates() -> Tuple[date, Dict[str, float]]:
+def fetch_latest_exchange_rates() -> tuple[date, dict[str, float]]:
     """
     获取最新的汇率数据。
 
@@ -43,7 +42,7 @@ def convert_currency(
     amount: float,
     from_currency: str,
     to_currency: str,
-    exchange_rates: Dict[str, float],
+    exchange_rates: dict[str, float],
 ) -> float:
     """
     执行货币转换。

@@ -3,8 +3,6 @@
 通过蒙特卡洛模拟展示不同投资策略下的财富增长趋势。
 """
 
-from typing import List, Tuple
-
 import pandas as pd
 import streamlit
 
@@ -22,8 +20,8 @@ def _render_title() -> None:
 
 
 def _get_user_inputs(
-    all_ticker_names: List[str],
-) -> Tuple[List[str], int, int, float, float]:
+    all_ticker_names: list[str],
+) -> tuple[list[str], int, int, float, float]:
     """
     获取用户输入，包括非股票资产过滤、投资时间、每月投资金额、平均回报率和标准差。
 

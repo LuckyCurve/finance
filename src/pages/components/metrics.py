@@ -6,8 +6,13 @@ import streamlit
 from adaptor.inbound.show_data import format_decimal
 
 
+from db.entity import AccountData, TickerData
+
+
 def display_finance_metrics(
-    converted_account: tuple, converted_ticker: tuple, selected_currency_symbol: str
+    converted_account: AccountData,
+    converted_ticker: TickerData,
+    selected_currency_symbol: str,
 ):
     """
     Displays the main financial metrics in columns.
@@ -20,13 +25,13 @@ def display_finance_metrics(
     col1, col2 = streamlit.columns(2)
     with col1:
         streamlit.metric(
-            label=f"我的财富总值 {converted_account[3]}",
-            value=f"{format_decimal(converted_account[0])} {selected_currency_symbol}",
-            delta=f"{format_decimal(converted_account[0] - converted_account[1])}",
+            label=f"我的财富总值 {converted_account.update_time}",
+            value=f"{format_decimal(converted_account.total_value)} {selected_currency_symbol}",
+            delta=f"{format_decimal(converted_account.total_value - converted_account.yesterday_value)}",
         )
     with col2:
         streamlit.metric(
-            label=f"我的股市数据 {converted_ticker[3]}",
-            value=f"{format_decimal(converted_ticker[0])} {selected_currency_symbol}",
-            delta=f"{format_decimal(converted_ticker[0] - converted_ticker[1])}",
+            label=f"我的股市数据 {converted_ticker.update_time}",
+            value=f"{format_decimal(converted_ticker.total_value)} {selected_currency_symbol}",
+            delta=f"{format_decimal(converted_ticker.total_value - converted_ticker.yesterday_value)}",
         )

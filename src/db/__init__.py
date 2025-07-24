@@ -1,3 +1,3 @@
-from sqlalchemy import create_engine
+from sqlalchemy import Engine, create_engine
 
-engine = create_engine("sqlite:///data/finance.db")
+engine: Engine = create_engine("sqlite:///data/finance.db")
