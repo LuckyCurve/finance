@@ -40,3 +40,8 @@ if __name__ == "__main__":
         label="交易详细数据",
         icon="📜",
     )
+    streamlit.page_link(
+        "pages/7_数据导入导出.py",
+        label="数据导入导出",
+        icon="📤",
+    )

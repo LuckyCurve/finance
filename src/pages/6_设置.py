@@ -1,5 +1,5 @@
 import streamlit as st
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
 
 from db import engine
 from db.entity import Config
@@ -13,8 +13,7 @@ st.write("---")
 if st.button("清除所有配置和缓存"):
     try:
         # 删除 config 表所有数据
-        Session = sessionmaker(bind=engine)
-        with Session() as session:
+        with Session(engine) as session:
             session.query(Config).delete()
             session.commit()
 
