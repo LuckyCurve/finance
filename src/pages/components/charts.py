@@ -227,6 +227,13 @@ def create_daily_change_line_chart(daily_change_df: pd.DataFrame, currency_symbo
 def create_historical_exchange_rate_chart(exchange_rate_df: pd.DataFrame):
     """Creates and displays the historical exchange rate line chart."""
     exchange_rate_df["日期"] = pd.to_datetime(exchange_rate_df["日期"])
+
+    # 计算Y轴范围
+    values = exchange_rate_df["汇率"]
+    min_val, max_val = values.min(), values.max()
+    buffer = (max_val - min_val) * 0.1 or (max_val * 0.01 if max_val > 0 else 1)
+    min_value, max_value = round(min_val - buffer, 2), round(max_val + buffer, 2)
+
     line_chart = (
         Line(init_opts=opts.InitOpts(theme=ThemeType.DARK, width="100%"))
         .add_xaxis(
@@ -240,7 +247,7 @@ def create_historical_exchange_rate_chart(exchange_rate_df: pd.DataFrame):
             tooltip_opts=opts.TooltipOpts(trigger="axis"),
             datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
             xaxis_opts=opts.AxisOpts(name="日期"),
-            yaxis_opts=opts.AxisOpts(name="汇率"),
+            yaxis_opts=opts.AxisOpts(name="汇率", min_=min_value, max_=max_value),
         )
     )
 
