@@ -118,12 +118,12 @@ def create_total_assets_line_chart(
                     opts.MarkPointItem(
                         type_="max",
                         name="最大值",
-                        itemstyle_opts=opts.ItemStyleOpts(color="#d94e5d"),
+                        itemstyle_opts=opts.ItemStyleOpts(color="#50a3ba"),
                     ),
                     opts.MarkPointItem(
                         type_="min",
                         name="最小值",
-                        itemstyle_opts=opts.ItemStyleOpts(color="#50a3ba"),
+                        itemstyle_opts=opts.ItemStyleOpts(color="#d94e5d"),
                     ),
                 ]
             ),
@@ -262,12 +262,12 @@ def create_historical_exchange_rate_chart(exchange_rate_df: pd.DataFrame):
                     opts.MarkPointItem(
                         type_="max",
                         name="最大值",
-                        itemstyle_opts=opts.ItemStyleOpts(color="#d94e5d"),
+                        itemstyle_opts=opts.ItemStyleOpts(color="#50a3ba"),
                     ),
                     opts.MarkPointItem(
                         type_="min",
                         name="最小值",
-                        itemstyle_opts=opts.ItemStyleOpts(color="#50a3ba"),
+                        itemstyle_opts=opts.ItemStyleOpts(color="#d94e5d"),
                     ),
                 ]
             ),
