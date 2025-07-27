@@ -14,3 +14,5 @@ data/
 
 *.pkl
 .env
+
+GEMINI.md
