@@ -8,8 +8,12 @@ from datetime import date
 
 import pandas as pd
 
+from sqlalchemy import desc
+from sqlalchemy.orm import Session
+
+import db
 from adaptor.inbound.show_data import get_exchange_rate_details
-from adaptor.outbound.currency import get_exchange_rate
+from db.entity import ExchangedRate
 
 
 def fetch_latest_exchange_rates() -> tuple[date, dict[str, float]]:
@@ -21,11 +25,24 @@ def fetch_latest_exchange_rates() -> tuple[date, dict[str, float]]:
             - current_date: 汇率数据的日期。
             - exchange_rates: 货币代码到汇率的映射字典 (1 USD = X Currency)。
     """
-    # 获取今天的汇率数据
-    current_date, exchange_rates_raw = get_exchange_rate(date.today())
-    # 将汇率值转换为浮点数
-    exchange_rates = {k: float(v) for k, v in exchange_rates_raw.items()}
-    return current_date, exchange_rates
+    with Session(db.engine) as session:
+        # 1. 查询最新的日期
+        latest_date = (
+            session.query(ExchangedRate.date).order_by(desc(ExchangedRate.date)).first()
+        )
+        if not latest_date:
+            return date.today(), {}
+
+        current_date = latest_date[0]
+
+        # 2. 获取该日期的所有汇率
+        rates = (
+            session.query(ExchangedRate)
+            .filter(ExchangedRate.date == current_date)
+            .all()
+        )
+        exchange_rates = {rate.currency_type.value: float(rate.rate) for rate in rates}
+        return current_date, exchange_rates
 
 
 def fetch_historical_exchange_rates() -> pd.DataFrame:
