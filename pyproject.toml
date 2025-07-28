@@ -5,8 +5,10 @@ description = "个人财富管理应用"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "agno>=1.7.6",
     "akshare>=1.17.8",
     "curl-cffi>=0.11.3",
+    "google-genai>=1.27.0",
     "numerize>=0.12",
     "numpy~=2.2.6",
     "pyecharts>=2.0.8",
@@ -14,9 +16,8 @@ dependencies = [
     "ruff>=0.12.4",
     "sqlalchemy>=2.0.41",
     "streamlit>=1.45.1",
+    "yfinance>=0.2.65",
 ]
 
 [dependency-groups]
-dev = [
-    "pre-commit>=4.2.0",
-]
+dev = ["pre-commit>=4.2.0"]
