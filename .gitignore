@@ -16,3 +16,6 @@ data/
 .env
 
 GEMINI.md
+
+# Log files
+logs/

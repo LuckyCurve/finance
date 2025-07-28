@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 
 from sqlalchemy import desc
@@ -22,7 +23,7 @@ def adjust_currency(currency: float | str, currency_type: CurrencyType) -> None:
         COMMENT = "平账操作"
 
         if abs(currency_asset.currency - Decimal(currency)) < 1:
-            print("无需平账")
+            logging.info("无需平账")
             return
 
         if currency_asset.currency > currency:
@@ -34,4 +35,4 @@ def adjust_currency(currency: float | str, currency_type: CurrencyType) -> None:
                 Decimal(currency) - currency_asset.currency, currency_type, COMMENT
             )
 
-    print("平账完成")
+    logging.info("平账完成")

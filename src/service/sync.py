@@ -2,6 +2,7 @@
 
 
 import datetime
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from decimal import Decimal
@@ -56,10 +57,10 @@ def sync() -> None:
     with Session(db.engine) as session:
         # 检查上次同步日期，如果今天已经同步过，则跳过
         if _is_already_synced(session):
-            print("检测到今日已同步，跳过任务。")
+            logging.info("检测到今日已同步，跳过任务。")
             return
 
-        print("开始执行数据同步任务...")
+        logging.info("开始执行数据同步任务...")
         # 按照正确的依赖顺序执行同步
         sync_exchange_rate()
         sync_ticker_info()  # sync_ticker_symbol 包含在其中
@@ -68,7 +69,7 @@ def sync() -> None:
 
         # 更新同步状态
         _update_sync_status(session)
-        print("所有数据均同步成功!")
+        logging.info("所有数据均同步成功!")
 
 
 def _is_already_synced(session: Session) -> bool:
@@ -111,7 +112,7 @@ def sync_account() -> None:
         # 获取首次资产记录的日期，作为计算的起始点
         first_asset = session.query(Asset).order_by(asc(Asset.date)).first()
         if not first_asset:
-            print("警告: 资产数据为空，无法计算账户价值。")
+            logging.warning("警告: 资产数据为空，无法计算账户价值。")
             return
 
         start_date = first_asset.date
@@ -160,7 +161,7 @@ def sync_account() -> None:
         if new_accounts:
             session.add_all(new_accounts)
             session.commit()
-            print(f"成功同步 {len(new_accounts)} 条账户价值记录。")
+            logging.info(f"成功同步 {len(new_accounts)} 条账户价值记录。")
 
 
 def _calculate_daily_total_value(
@@ -198,7 +199,7 @@ def _convert_to_usd(
         return value
     rate = rates.get(currency_type)
     if rate is None or rate == 0:
-        print(f"警告: 找不到货币 {currency_type} 的汇率，无法换算。")
+        logging.warning(f"警告: 找不到货币 {currency_type} 的汇率，无法换算。")
         return Decimal(0)
     return value / rate
 
@@ -248,7 +249,7 @@ def sync_asset() -> None:
 
         # 检查是否有交易记录，没有则无法继续
         if session.query(Transaction).count() == 0:
-            print("警告: 交易记录为空，无法生成资产数据。")
+            logging.warning("警告: 交易记录为空，无法生成资产数据。")
             return
 
         # 分别同步股票和现金资产
@@ -260,9 +261,9 @@ def sync_asset() -> None:
         if all_assets:
             session.add_all(all_assets)
             session.commit()
-            print(f"成功同步 {len(all_assets)} 条资产记录。")
+            logging.info(f"成功同步 {len(all_assets)} 条资产记录。")
         else:
-            print("没有生成任何资产记录。")
+            logging.info("没有生成任何资产记录。")
 
 
 def _sync_currency_asset(session: Session) -> list[CurrencyAsset]:
@@ -416,7 +417,7 @@ def sync_exchange_rate() -> None:
             session.query(Transaction).order_by(asc(Transaction.date)).first()
         )
         if not first_transaction:
-            print("警告: 交易记录为空，无法确定同步汇率的起始日期。")
+            logging.warning("警告: 交易记录为空，无法确定同步汇率的起始日期。")
             return
 
         start_date = first_transaction.date
@@ -427,7 +428,7 @@ def sync_exchange_rate() -> None:
             return
 
         # 2. 使用线程池并发获取汇率数据
-        print(f"正在同步从 {start_date} 到 {end_date} 的汇率数据...")
+        logging.info(f"正在同步从 {start_date} 到 {end_date} 的汇率数据...")
         with ThreadPoolExecutor(max_workers=10) as executor:
             # map 会保持原始的提交顺序
             results = executor.map(currency.get_exchange_rate, date_range)
@@ -449,9 +450,9 @@ def sync_exchange_rate() -> None:
             session.query(ExchangedRate).delete()  # 先清空旧数据
             session.add_all(exchanged_rates)
             session.commit()
-            print(f"成功同步 {len(exchanged_rates)} 条汇率记录。")
+            logging.info(f"成功同步 {len(exchanged_rates)} 条汇率记录。")
         else:
-            print("未能获取到任何汇率数据。")
+            logging.info("未能获取到任何汇率数据。")
 
 
 @timing_decorator
@@ -471,7 +472,7 @@ def sync_ticker_info() -> None:
         # 1. 获取需要同步的股票列表
         ticker_data_to_fetch = _get_ticker_data_to_fetch(session)
         if not ticker_data_to_fetch:
-            print("没有需要同步的股票信息。")
+            logging.info("没有需要同步的股票信息。")
             return
 
         # 2. 并发获取所有股票的历史价格
@@ -482,9 +483,9 @@ def sync_ticker_info() -> None:
             session.query(TickerInfo).delete()
             session.add_all(all_ticker_infos)
             session.commit()
-            print(f"成功同步 {len(all_ticker_infos)} 条股票价格信息。")
+            logging.info(f"成功同步 {len(all_ticker_infos)} 条股票价格信息。")
         else:
-            print("没有获取到任何股票价格信息。")
+            logging.info("没有获取到任何股票价格信息。")
 
 
 def _get_ticker_data_to_fetch(session: Session) -> list[tuple[str, date, TickerSymbol]]:
@@ -499,7 +500,9 @@ def _get_ticker_data_to_fetch(session: Session) -> list[tuple[str, date, TickerS
         if symbol:
             results.append((ticker_name, buy_date, symbol))
         else:
-            print(f"警告: 在 TickerSymbol 表中找不到 {ticker_name} 的信息，跳过同步。")
+            logging.warning(
+                f"警告: 在 TickerSymbol 表中找不到 {ticker_name} 的信息，跳过同步。"
+            )
     return results
 
 
@@ -546,7 +549,7 @@ def _fetch_single_ticker_history(
             end_date=date.today() - timedelta(1),
         )
         if not raw_history:
-            print(f"警告: 未找到 {ticker_name} 的历史数据。")
+            logging.warning(f"警告: 未找到 {ticker_name} 的历史数据。")
             return None
 
         # 填充缺失的价格数据
@@ -554,7 +557,7 @@ def _fetch_single_ticker_history(
             raw_history, buy_date, ticker_name, currency_type
         )
     except Exception as e:
-        print(f"错误: 获取 {ticker_name} 历史数据时出错: {e}")
+        logging.error(f"错误: 获取 {ticker_name} 历史数据时出错: {e}")
         return None
 
 
@@ -630,11 +633,11 @@ def _sync_ticker_symbols(ticker_type: TickerType, fetch_symbols_func: callable) 
             .count()
         )
         if count > 0:
-            print(f"已找到 {ticker_type.value} 类型的股票代码，跳过同步。")
+            logging.info(f"已找到 {ticker_type.value} 类型的股票代码，跳过同步。")
             return
 
         # 如果不存在，则从外部 API 获取并存入数据库
-        print(f"正在从外部 API 同步 {ticker_type.value} 类型的股票代码...")
+        logging.info(f"正在从外部 API 同步 {ticker_type.value} 类型的股票代码...")
         symbols_to_add = [
             TickerSymbol(symbol=symbol, name=name, ticker_type=ticker_type)
             for (name, symbol) in fetch_symbols_func()
@@ -643,6 +646,8 @@ def _sync_ticker_symbols(ticker_type: TickerType, fetch_symbols_func: callable) 
         if symbols_to_add:
             session.add_all(symbols_to_add)
             session.commit()
-            print(f"成功同步 {len(symbols_to_add)} 个 {ticker_type.value} 股票代码。")
+            logging.info(
+                f"成功同步 {len(symbols_to_add)} 个 {ticker_type.value} 股票代码。"
+            )
         else:
-            print(f"未能从 API 获取到 {ticker_type.value} 股票代码。")
+            logging.info(f"未能从 API 获取到 {ticker_type.value} 股票代码。")

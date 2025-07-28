@@ -3,8 +3,11 @@ import streamlit
 import db
 from db.common import Base
 from service.sync import sync
+from utils.logger import setup_logging
 
 if __name__ == "__main__":
+    setup_logging()
+
     streamlit.set_page_config(
         page_title="我的财富看板",
         page_icon="💰",
