@@ -132,7 +132,10 @@ def create_total_assets_line_chart(
         .set_global_opts(
             title_opts=opts.TitleOpts(title="每日总资产变化"),  # 动态单位
             tooltip_opts=opts.TooltipOpts(trigger="axis"),
-            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
+            datazoom_opts=[
+                opts.DataZoomOpts(range_start=0, range_end=100),
+                opts.DataZoomOpts(type_="inside"),
+            ],
             xaxis_opts=opts.AxisOpts(name="日期"),
             yaxis_opts=opts.AxisOpts(name="总财富", min_=min_value, max_=max_value),
         )
@@ -156,7 +159,10 @@ def create_stock_market_bar_chart(
         .set_global_opts(
             title_opts=opts.TitleOpts(title="每日股票市值"),  # 动态单位
             tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="shadow"),
-            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
+            datazoom_opts=[
+                opts.DataZoomOpts(range_start=0, range_end=100),
+                opts.DataZoomOpts(type_="inside"),
+            ],
             xaxis_opts=opts.AxisOpts(name="日期"),
             yaxis_opts=opts.AxisOpts(name="市场价格"),
         )
@@ -183,7 +189,10 @@ def create_stock_earn_rate_line_chart(earn_rate_df: pd.DataFrame):
         .set_global_opts(
             title_opts=opts.TitleOpts(title="个股总收益率", subtitle="单位: %"),
             tooltip_opts=opts.TooltipOpts(trigger="axis"),
-            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
+            datazoom_opts=[
+                opts.DataZoomOpts(range_start=0, range_end=100),
+                opts.DataZoomOpts(type_="inside"),
+            ],
             xaxis_opts=opts.AxisOpts(name="日期"),
             yaxis_opts=opts.AxisOpts(name="总收益百分比"),
         )
@@ -209,7 +218,10 @@ def create_daily_change_line_chart(daily_change_df: pd.DataFrame, currency_symbo
         .set_global_opts(
             title_opts=opts.TitleOpts(title="每日个股涨跌"),  # 动态单位
             tooltip_opts=opts.TooltipOpts(trigger="axis"),
-            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
+            datazoom_opts=[
+                opts.DataZoomOpts(range_start=0, range_end=100),
+                opts.DataZoomOpts(type_="inside"),
+            ],
             xaxis_opts=opts.AxisOpts(name="日期"),
             yaxis_opts=opts.AxisOpts(name="涨跌幅"),
         )
@@ -245,7 +257,10 @@ def create_historical_exchange_rate_chart(exchange_rate_df: pd.DataFrame):
         .set_global_opts(
             title_opts=opts.TitleOpts(title="历史汇率变化"),
             tooltip_opts=opts.TooltipOpts(trigger="axis"),
-            datazoom_opts=[opts.DataZoomOpts(), opts.DataZoomOpts(type_="inside")],
+            datazoom_opts=[
+                opts.DataZoomOpts(range_start=0, range_end=100),
+                opts.DataZoomOpts(type_="inside"),
+            ],
             xaxis_opts=opts.AxisOpts(name="日期"),
             yaxis_opts=opts.AxisOpts(name="汇率", min_=min_value, max_=max_value),
         )
