@@ -6,7 +6,6 @@ from agno.models.google import Gemini
 from agno.team import Team
 from agno.tools.googlesearch import GoogleSearchTools
 from agno.tools.reasoning import ReasoningTools
-from agno.tools.thinking import ThinkingTools
 from agno.tools.yfinance import YFinanceTools
 
 st.title("AI Investment Agent 📈🤖")
@@ -15,12 +14,12 @@ st.caption(
 )
 
 api_key = os.environ["GEMINI_API_KEY"]
-model = "gemini-2.5-pro"
+main_model = "gemini-2.5-pro"
+fetch_model = "gemini-2.5-flash"
 
 assistant = Agent(
-    model=Gemini(id=model, api_key=api_key),
+    model=Gemini(id=main_model, api_key=api_key),
     tools=[
-        ThinkingTools(add_instructions=True),
         ReasoningTools(add_instructions=True, add_few_shot=True),
         YFinanceTools(
             stock_price=True,
@@ -47,7 +46,7 @@ assistant = Agent(
 web_agent = Agent(
     name="Web Search Agent",
     role="Handle web search requests and general research",
-    model=Gemini(id=model, api_key=api_key),
+    model=Gemini(id=fetch_model, api_key=api_key),
     tools=[GoogleSearchTools()],
     instructions="Always include sources",
     add_datetime_to_instructions=True,
@@ -56,7 +55,7 @@ web_agent = Agent(
 finance_agent = Agent(
     name="Finance Agent",
     role="Handle financial data requests and market analysis",
-    model=Gemini(id=model, api_key=api_key),
+    model=Gemini(id=main_model, api_key=api_key),
     tools=[
         YFinanceTools(
             stock_price=True,
@@ -81,7 +80,7 @@ finance_agent = Agent(
 reasoning_finance_team = Team(
     name="Reasoning Finance Team",
     mode="coordinate",
-    model=Gemini(id=model, api_key=api_key),
+    model=Gemini(id=main_model, api_key=api_key),
     members=[web_agent, finance_agent],
     tools=[ReasoningTools(add_instructions=True)],
     instructions=[
@@ -105,7 +104,7 @@ stock = st.text_input("Enter first stock symbol (e.g. AAPL)")
 if stock:
     with st.spinner(f"Analyzing {stock}..."):
         query = f"Analyze the stock - {stock} and make a detailed report for an investment trying to invest in this stock"
-        response = reasoning_finance_team.run(query, stream=False)
+        response = assistant.run(query, stream=False)
         st.markdown(response.content)
         st.download_button(
             label="下载分析报告",
