@@ -23,3 +23,12 @@ dependencies = [
 
 [dependency-groups]
 dev = ["pre-commit>=4.2.0"]
+
+[tool.pyright]
+# 告诉 Pyright 包含 venv 的目录是哪里
+# "." 代表当前目录 (即项目根目录)
+venvPath = "."
+
+# 告诉 Pyright venv 目录的名字是什么
+# 这是你在 Windows 上的目录名
+venv = ".venv"
