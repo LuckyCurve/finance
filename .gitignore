@@ -15,7 +15,7 @@ data/
 *.pkl
 .env
 
-GEMINI.md
+GEMINI.md*
 
 # Log files
 logs/
