@@ -75,16 +75,16 @@ def create_sunburst_chart(
                 formatter="{b}", font_size=14, position="outside"
             ),
             color=[
-                "#6E7074",
-                "#5470C6",
-                "#91CC75",
-                "#EE6666",
-                "#FC8452",
-                "#73C0DE",
-                "#3BA272",
-                "#FC8452",
-                "#9A60B4",
-                "#EA7CCC",
+                "#58A6FF",
+                "#39C5CF",
+                "#238636",
+                "#DBAB09",
+                "#DA3633",
+                "#8957E5",
+                "#8B949E",
+                "#C9D1D9",
+                "#161B22",
+                "#0D1117",
             ],
         )
         .render_embed()
