@@ -20,6 +20,11 @@ def adjust_currency(currency: float | str, currency_type: CurrencyType) -> None:
             .first()
         )
 
+        if currency_asset is None:
+            currency_asset = CurrencyAsset(
+                currency_type=currency_type, currency=Decimal(0)
+            )
+
         COMMENT = "平账操作"
 
         if abs(currency_asset.currency - Decimal(currency)) < 1:

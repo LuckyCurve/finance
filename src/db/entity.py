@@ -188,3 +188,8 @@ class TickerSymbol(Base):
     ticker_type: Mapped[TickerType] = mapped_column(
         Enum(TickerType), nullable=False, comment="股票类型"
     )
+
+    def __repr__(self):
+        return (
+            f"(symbol={self.symbol}, name={self.name}, ticker_type={self.ticker_type})"
+        )

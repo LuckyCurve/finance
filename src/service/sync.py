@@ -552,6 +552,8 @@ def _fetch_single_ticker_history(
             logging.warning(f"警告: 未找到 {ticker_name} 的历史数据。")
             return None
 
+        logging.info(f"正在处理 {symbol} 的历史数据...")
+
         # 填充缺失的价格数据
         return _fill_missing_ticker_prices(
             raw_history, buy_date, ticker_name, currency_type
