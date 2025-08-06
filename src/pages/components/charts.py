@@ -89,7 +89,7 @@ def create_sunburst_chart(
         )
         .render_embed()
     )
-    components.html(sunburst_chart, height=600)
+    components.html(sunburst_chart, height=600, width=5000)
 
 
 def create_total_assets_line_chart(
@@ -141,7 +141,7 @@ def create_total_assets_line_chart(
         )
         .render_embed()
     )
-    components.html(line_chart, height=600)
+    components.html(line_chart, height=600, width=5000)
 
 
 def create_stock_market_bar_chart(
@@ -175,7 +175,7 @@ def create_stock_market_bar_chart(
             stack="total",
             label_opts=opts.LabelOpts(is_show=False),
         )
-    components.html(bar_chart.render_embed(), height=600)
+    components.html(bar_chart.render_embed(), height=600, width=5000)
 
 
 def create_stock_earn_rate_line_chart(earn_rate_df: pd.DataFrame):
@@ -204,7 +204,7 @@ def create_stock_earn_rate_line_chart(earn_rate_df: pd.DataFrame):
             y_axis=ticker_df["TotalEarnRate"].tolist(),
             label_opts=opts.LabelOpts(is_show=False),
         )
-    components.html(line_earn_rate.render_embed(), height=600)
+    components.html(line_earn_rate.render_embed(), height=600, width=5000)
 
 
 def create_daily_change_line_chart(daily_change_df: pd.DataFrame, currency_symbol: str):
@@ -233,7 +233,7 @@ def create_daily_change_line_chart(daily_change_df: pd.DataFrame, currency_symbo
             y_axis=ticker_df["Earn"].tolist(),
             label_opts=opts.LabelOpts(is_show=False),
         )
-    components.html(line_daily_change.render_embed(), height=600)
+    components.html(line_daily_change.render_embed(), height=600, width=5000)
 
 
 def create_historical_exchange_rate_chart(exchange_rate_df: pd.DataFrame):
@@ -288,4 +288,4 @@ def create_historical_exchange_rate_chart(exchange_rate_df: pd.DataFrame):
             ),
         )
 
-    components.html(line_chart.render_embed(), height=600)
+    components.html(line_chart.render_embed(), height=600, width=5000)
