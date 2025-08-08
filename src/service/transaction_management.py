@@ -6,8 +6,9 @@
 
 import datetime
 
-from db.entity import CurrencyType
+from db.entity import CurrencyType, TickerSymbol
 from service.adjust import adjust_currency
+from service.sync import search_ticker_symbol
 from service.transaction import buy_stock
 
 
@@ -33,8 +34,11 @@ def process_stock_purchase(
     if shares <= 0 or price <= 0:
         return False, "买入数量和价格必须大于零"
     try:
-        buy_stock(symbol, trans_date, shares, price)
-        return True, "股票买入记录已添加"
+        symbol: TickerSymbol = search_ticker_symbol(symbol)
+        if not symbol:
+            return False, "未找到有效的股票代码"
+        buy_stock(symbol.symbol, trans_date, shares, price)
+        return True, f"股票买入记录 {symbol.symbol} 已添加"
     except Exception as e:
         return False, f"操作失败: {str(e)}"
 
