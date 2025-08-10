@@ -75,12 +75,12 @@ def create_sunburst_chart(
                 formatter="{b}", font_size=14, position="outside"
             ),
             color=[
-                "#58A6FF",
-                "#39C5CF",
-                "#238636",
-                "#DBAB09",
-                "#DA3633",
-                "#8957E5",
+                "#0D47A1",  # Professional Blue for Stocks
+                "#FFB300",  # Wealth Gold for Cash
+                "#42A5F5",  # Lighter Blue
+                "#FFD54F",  # Lighter Gold
+                "#90CAF9",  # Even Lighter Blue
+                "#FFE082",  # Even Lighter Gold
                 "#8B949E",
                 "#C9D1D9",
                 "#161B22",
